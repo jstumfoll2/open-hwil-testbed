@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hwil-testbed"
+version = "0.1.0"
+description = "Open, unclassified hardware-in-the-loop testbed: JSBSim + PX4 over MAVLink, with automated STL-graded tests."
+readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Jason Stumfoll" }]
+# rtamt depends on antlr4-python3-runtime 4.7, which imports typing.io and so
+# fails on Python 3.13+. Stay on 3.10-3.12 until that is fixed upstream.
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "jsbsim>=1.2,<2",
+    "numpy>=1.24",
+    "pyyaml>=6",
+    "pymavlink>=2.4.40",
+    "matplotlib>=3.7",
+    "rtamt>=0.3.5",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7"]
+
+[project.scripts]
+hwil = "hwil.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["hwil*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "px4: needs a running PX4 SITL build (skipped unless HWIL_PX4_DIR is set)",
+]

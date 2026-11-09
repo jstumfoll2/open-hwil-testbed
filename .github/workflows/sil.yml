@@ -1,0 +1,36 @@
+name: SIL tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  sil:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Validate scenarios
+        run: hwil validate scenarios/*.yaml
+      - name: Tests (builtin controller; PX4 tests skip here)
+        run: pytest -q
+      - name: Reference run and reproduce check
+        run: |
+          hwil run scenarios/takeoff_hold_land.yaml --out runs
+          hwil reproduce runs/*/manifest.json --out runs
+      - name: Upload run folders
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sil-runs
+          path: runs/
+          retention-days: 14

@@ -1,0 +1,38 @@
+# M1 reference scenario: take off, loiter (position hold) at 20 m, land.
+name: takeoff_hold_land
+description: >
+  Take off from home to 20 m, hold position for 60 s in a light breeze with
+  light turbulence, then land at home.
+seed: 1
+
+sim:
+  rate_hz: 250
+  duration_s: 150
+
+wind:
+  north_mps: 3.0
+  east_mps: 1.0
+  turbulence_severity: 1
+
+mission:
+  - type: takeoff
+    alt_m: 20.0
+  - type: hold
+    duration_s: 60.0
+  - type: land
+
+requirements:
+  # "eventually[30s,30s](always(...))" reads "from t = 30 s onward, always ...".
+  # Robustness is the margin in the spec's units (here metres).
+  - id: REQ-ALT-001
+    text: After 30 s, altitude stays within 5 m of the commanded loiter altitude while loitering.
+    stl: "eventually[30s,30s](always((loiter > 0) -> (abs(alt_m - alt_cmd_m) <= 5.0)))"
+  - id: REQ-POS-001
+    text: While loitering, the vehicle stays within 3 m horizontally of home.
+    stl: "always((loiter > 0) -> (hdist_m <= 3.0))"
+  - id: REQ-TILT-001
+    text: Tilt never exceeds 30 degrees.
+    stl: "always(tilt_deg <= 30.0)"
+  - id: REQ-LAND-001
+    text: The vehicle lands and disarms within 3 m of home.
+    stl: "eventually((landed > 0) and (hdist_m <= 3.0))"

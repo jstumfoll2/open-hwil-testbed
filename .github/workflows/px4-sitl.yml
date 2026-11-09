@@ -1,0 +1,53 @@
+name: PX4 SITL tests
+
+# Builds PX4 SITL (about 10-15 min cold, cached afterwards) and flies every
+# scenario with PX4 in the loop. Manual and weekly, to keep push CI fast.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
+
+permissions:
+  contents: read
+
+env:
+  PX4_REF: v1.15.4
+
+jobs:
+  px4-sitl:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install testbed
+        run: pip install -e ".[dev]"
+      - name: Cache PX4 build
+        id: px4-cache
+        uses: actions/cache@v4
+        with:
+          path: px4
+          key: px4-sitl-${{ env.PX4_REF }}-ubuntu-24.04-v1
+      - name: Build PX4 SITL
+        if: steps.px4-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update && sudo apt-get install -y ninja-build cmake build-essential
+          git clone --depth 1 --branch "$PX4_REF" --recursive --shallow-submodules \
+            https://github.com/PX4/PX4-Autopilot.git px4
+          # Shallow NuttX submodule has no tags; PX4's version script needs one.
+          git -C px4/platforms/nuttx/NuttX/nuttx tag nuttx-11.0.0
+          python -m venv px4-venv
+          px4-venv/bin/pip install -r px4/Tools/setup/requirements.txt
+          PATH="$PWD/px4-venv/bin:$PATH" make -C px4 px4_sitl_default
+      - name: Tests with PX4 in the loop
+        run: HWIL_PX4_DIR="$PWD/px4" pytest -q -m px4 --basetemp=pytest-tmp
+      - name: Upload run folders and PX4 logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: px4-sitl-runs
+          path: pytest-tmp/
+          retention-days: 14

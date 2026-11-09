@@ -1,0 +1,41 @@
+# Loiter in a stronger breeze while faults are injected: a 15 % thrust loss on
+# one motor, a 5 s GPS dropout and a baro bias step. The builtin controller
+# uses true state, so only the motor fault affects it; PX4 sees all three.
+name: hold_with_faults
+description: >
+  Take off to 15 m, hold 60 s in a 4 m/s wind with light-to-moderate turbulence while a
+  motor loses 15 % efficiency, GPS drops out for 5 s and the baro steps by
+  0.3 hPa (about 2.5 m), then land.
+seed: 2
+
+sim:
+  duration_s: 150
+
+wind:
+  north_mps: -3.0
+  east_mps: 3.0
+  turbulence_severity: 2
+
+mission:
+  - {type: takeoff, alt_m: 15.0}
+  - {type: hold, duration_s: 60.0}
+  - {type: land}
+
+faults:
+  - {type: motor_efficiency, motor: 2, factor: 0.85, t_s: 30.0}
+  - {type: gps_dropout, t_s: 45.0, duration_s: 5.0}
+  - {type: baro_bias, bias_hpa: 0.3, t_s: 55.0}
+
+requirements:
+  - id: REQ-ALT-002
+    text: After 30 s, altitude stays within 5 m of the commanded loiter altitude while loitering.
+    stl: "eventually[30s,30s](always((loiter > 0) -> (abs(alt_m - alt_cmd_m) <= 5.0)))"
+  - id: REQ-POS-002
+    text: While loitering, the vehicle stays within 5 m horizontally of home.
+    stl: "always((loiter > 0) -> (hdist_m <= 5.0))"
+  - id: REQ-TILT-002
+    text: Tilt never exceeds 35 degrees.
+    stl: "always(tilt_deg <= 35.0)"
+  - id: REQ-LAND-002
+    text: The vehicle lands and disarms within 5 m of home.
+    stl: "eventually((landed > 0) and (hdist_m <= 5.0))"

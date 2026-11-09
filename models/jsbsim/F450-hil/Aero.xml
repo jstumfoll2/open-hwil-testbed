@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!--
+  Replacement aerodynamics for the public JSBSim F450 quadcopter.
+
+  The stock F450 model has all aerodynamic coefficients set to zero, so wind
+  has no effect on it. This file adds a single isotropic drag term along the
+  relative wind:  D = qbar * S * CD,  with CD chosen so that CD * S ~= 0.05 m^2,
+  a rough, generic figure for a 450 mm class quad frame. It is a placeholder
+  to make wind and gust scenarios meaningful, not a validated model.
+
+  Copyright 2026 The open-hwil-testbed authors. Licensed under Apache-2.0.
+-->
+<aerodynamics>
+  <property value="3.1">aero/coefficient/CD-isotropic</property>
+
+  <axis name="DRAG">
+    <function name="aero/force/DRAG_isotropic">
+      <description>Isotropic body drag along the relative wind</description>
+      <product>
+        <property>aero/qbar-area</property>
+        <property>aero/coefficient/CD-isotropic</property>
+      </product>
+    </function>
+  </axis>
+</aerodynamics>
