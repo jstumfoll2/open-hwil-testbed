@@ -1,4 +1,4 @@
-"""PX4 in the loop over MAVLink (SITL over TCP now, HITL over serial in M3).
+"""PX4 in the loop over MAVLink (SITL over TCP now, HITL over serial in M8).
 
 Simulation link (the same messages PX4 uses for SITL and HITL):
   sim -> PX4: HIL_SENSOR every frame, HIL_GPS at the GPS rate
@@ -7,7 +7,7 @@ Simulation link (the same messages PX4 uses for SITL and HITL):
 SITL: PX4's ``simulator_mavlink`` module connects to us on TCP 4560. The run is
 lockstep: PX4's clock is driven by the HIL_SENSOR timestamps, and after each
 sensor message we wait for PX4's actuator reply before stepping JSBSim. The
-time spent waiting is recorded as ``io_wait`` and is the seed of the M3
+time spent waiting is recorded as ``io_wait`` and is the seed of the M4/M8
 end-to-end latency measurement.
 
 Mission link: arm, takeoff and land go to PX4 as ordinary MAVLink commands on

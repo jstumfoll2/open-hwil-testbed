@@ -7,7 +7,7 @@ JSBSim step -> log. Two clock modes:
   With PX4 SITL this is lockstep: PX4's clock follows the simulated time.
 * ``realtime``: each frame starts on an absolute deadline (period = 1/rate).
   Frame start lateness, compute time and overruns are recorded for the timing
-  report. Python is not a hard real-time language; this is the M1/M2 baseline
+  report. Python is not a hard real-time language; this is the M1 baseline
   that the C++ or Trick executive will be measured against.
 """
 

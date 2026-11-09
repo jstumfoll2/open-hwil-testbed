@@ -1,6 +1,6 @@
 """Plots and a small HTML report for one run.
 
-M1 keeps this to static PNGs plus an index page; the M4 test-harness report
+M1 keeps this to static PNGs plus an index page; the M2 test-harness report
 (requirements table, interactive plots) builds on it.
 """
 

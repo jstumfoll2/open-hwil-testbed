@@ -42,7 +42,7 @@ See [architecture.md](architecture.md) for the diagram as built.
 | Layer | Choice | Notes |
 |---|---|---|
 | OS | Ubuntu LTS with PREEMPT_RT kernel | Use `isolcpus`, set IRQ affinity, run `cyclictest` to get a baseline |
-| Executive | Start with a simple C++/Python fixed-rate loop; move to **NASA Trick** in milestone 5 | Trick adds Monte Carlo, checkpointing and data recording |
+| Executive | Start with a simple C++/Python fixed-rate loop; move to **NASA Trick** in milestone 6 | Trick adds Monte Carlo, checkpointing and data recording |
 | Flight model | **JSBSim** (C++ library or Python bindings) | Use a public UAV/aircraft model from the JSBSim repo |
 | Flight controller | **PX4** on Pixhawk (HITL) | PX4 SITL first, then the same scenarios in HITL |
 | Interface | MAVLink (pymavlink / C library) | HIL_SENSOR, HIL_GPS in; HIL_ACTUATOR_CONTROLS out |
@@ -53,16 +53,21 @@ See [architecture.md](architecture.md) for the diagram as built.
 
 ## 6. Milestones
 
-| # | Milestone | Done when |
-|---|---|---|
-| M0 | Repo, license (Apache-2.0), README, ground rules | Public repo exists with this brief |
-| M1 | SIL loop: JSBSim + PX4 SITL, scripted takeoff/loiter/land | One command runs a scenario and produces plots |
-| M2 | Real-time baseline on PREEMPT_RT | cyclictest and in-loop jitter report; frame overrun counter in logs |
-| M3 | HITL with a real Pixhawk | Same scenario passes in SIL and HITL; latency measured end to end |
-| M4 | Test harness | 10+ scenario tests with STL-graded requirements and an HTML report per run |
-| M5 | Executive upgrade to NASA Trick (optional) | Trick runs the loop with Monte Carlo of wind/sensor-noise cases in SIL |
-| M6 | AI-in-test add-on | Anomaly detection over run logs, plus LLM-drafted test cases reviewed by a human |
-| M7 | Write-up | Blog post or paper draft on lab engineering lessons |
+Reordered on 2026-11-09 so that all software-only work comes before the
+hardware milestones.
+
+| # | Milestone | Needs hardware | Done when |
+|---|---|---|---|
+| M0 | Repo, license (Apache-2.0), README, ground rules | no | Public repo exists with this brief |
+| M1 | SIL loop: JSBSim + PX4 SITL, scripted takeoff/loiter/land | no | One command runs a scenario and produces plots |
+| M2 | Test harness | no | 10+ scenario tests with STL-graded requirements and an HTML report per run |
+| M3 | Monte Carlo in SIL | no | Batch runs over wind, sensor-noise and fault dispersions with pass-rate statistics |
+| M4 | Compiled executive and timing tooling | no | C++ fixed-rate loop with JSBSim; jitter and overrun report on a stock kernel; bridge latency in SITL |
+| M5 | AI-in-test add-on | no | Anomaly detection over run logs, plus LLM-drafted test cases reviewed by a human |
+| M6 | Executive upgrade to NASA Trick (optional) | no | Trick runs the loop with Monte Carlo of wind/sensor-noise cases in SIL |
+| M7 | Real-time baseline on PREEMPT_RT | Linux PC | cyclictest and in-loop jitter report; frame overrun counter in logs |
+| M8 | HITL with a real Pixhawk | Pixhawk | Same scenario passes in SIL and HITL; latency measured end to end |
+| M9 | Write-up | no | Blog post or paper draft on lab engineering lessons |
 
 ## 7. Hardware shopping list (approximate)
 
@@ -76,7 +81,7 @@ See [architecture.md](architecture.md) for the diagram as built.
 ## 8. Success measures
 
 - One command reproduces any run from its manifest.
-- SIL and HITL results agree within stated tolerances for the M3 scenarios.
+- SIL and HITL results agree within stated tolerances for the M8 scenarios.
 - Timing report shows the frame budget is met (no overruns in a 30-minute run).
 - Public repo with docs good enough for someone else to rebuild the bench.
 

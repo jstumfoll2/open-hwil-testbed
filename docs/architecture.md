@@ -44,8 +44,9 @@ sequenceDiagram
 - **`realtime`**: each frame starts on an absolute deadline. `timing.csv` records
   how late each frame started, its compute time and whether it overran the next
   deadline. `--rt-priority` and `--rt-cpu` request `SCHED_FIFO` and CPU pinning.
-  Python is the M1 baseline; M2 measures it on PREEMPT_RT, and a C++ or Trick
-  executive replaces it if it cannot hold the frame budget.
+  Python is the M1 baseline. M4 adds a C++ loop, M7 measures both on
+  PREEMPT_RT, and the compiled executive takes over if Python cannot hold
+  the frame budget.
 
 ## PX4 link
 
@@ -58,7 +59,7 @@ sequenceDiagram
 | sim to PX4 | `PARAM_SET` | once | `SITL_PARAMS`: F450 rotor geometry, hover thrust, no-RC failsafes |
 
 SITL uses TCP 4560 for the HIL link (PX4 connects to us) and UDP 14540 for
-commands. HITL (M3) will use a single USB serial link for both; the bridge
+commands. HITL (M8) will use a single USB serial link for both; the bridge
 already accepts `--px4-serial /dev/ttyACM0`, but that path has not been tested
 on hardware yet.
 

@@ -20,7 +20,7 @@ DEFAULT_OPTIONS = {
     "clock": "afap",           # afap | realtime
     "px4_sim_port": 4560,      # TCP port PX4 SITL connects to
     "px4_gcs": "udpin:0.0.0.0:14540",
-    "px4_serial": None,        # e.g. /dev/ttyACM0 for HITL (M3)
+    "px4_serial": None,        # e.g. /dev/ttyACM0 for HITL (M8)
     "px4_baud": 921600,
     "rt_priority": None,
     "rt_cpu": None,

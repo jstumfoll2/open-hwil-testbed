@@ -4,7 +4,7 @@ Three layers, in the order you need them:
 
 1. [Python environment and JSBSim](#1-python-environment-and-jsbsim) (enough for SIL with the builtin controller and for CI)
 2. [PX4 SITL](#2-px4-sitl) (M1 with PX4 in the loop)
-3. [PREEMPT_RT kernel and timing baseline](#3-preempt_rt-kernel-and-timing-baseline) (M2)
+3. [PREEMPT_RT kernel and timing baseline](#3-preempt_rt-kernel-and-timing-baseline) (M7, needs a dedicated Linux PC)
 
 Tested on Ubuntu 24.04 LTS (x86-64). Other recent Linux distributions should work.
 
@@ -26,7 +26,7 @@ The `jsbsim` package on PyPI ships prebuilt wheels with the JSBSim C++ engine
 and its aircraft data, including the F450 used here. Nothing else to build.
 
 Building JSBSim from source is only needed to use the C++ library directly
-(for example from a C++ or Trick executive in M2 or M5):
+(for example from a C++ or Trick executive in M4 or M6):
 
 ```bash
 sudo apt install build-essential cmake
@@ -140,7 +140,7 @@ sudo cyclictest --mlockall --priority=90 --interval=1000 --affinity=3 \
 
 Record the max latency. On a tuned PREEMPT_RT desktop it is typically tens of
 microseconds; on a stock kernel it can reach milliseconds. Save the output next
-to the M2 timing report.
+to the M7 timing report.
 
 ### In-loop timing
 
@@ -150,4 +150,4 @@ hwil run scenarios/takeoff_hold_land.yaml --clock realtime --rt-priority 80 --rt
 
 `timing.csv` and `timing.png` in the run folder hold per-frame start
 lateness, compute time and overruns, and `manifest.json` summarizes them
-(`results.timing`). M2 extends this to a 30-minute soak and a jitter report.
+(`results.timing`). M7 extends this to a 30-minute soak and a jitter report.

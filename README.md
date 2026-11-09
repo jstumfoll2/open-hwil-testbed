@@ -14,7 +14,7 @@ HITL mode.
 > loop, one command per scenario, logs and plots) are done. PX4 v1.15.4 SITL
 > flies both scenarios through the MAVLink HIL bridge in lockstep and passes
 > the same STL requirements as the builtin controller.
-> Next: M2 (real-time baseline on PREEMPT_RT). See [Milestones](#milestones).
+> Next: M2 (test harness), then the rest of the software-only milestones. See [Milestones](#milestones).
 
 ## Ground rules
 
@@ -100,7 +100,7 @@ flowchart LR
         EXEC --> LOG
     end
     subgraph FC[Flight controller]
-        PX4[PX4 SITL now<br/>Pixhawk HITL in M3]
+        PX4[PX4 SITL now<br/>Pixhawk HITL in M8]
         BI[Builtin reference<br/>autopilot]
     end
     SENS -->|MAVLink HIL_SENSOR / HIL_GPS| PX4
@@ -146,8 +146,8 @@ the margin in the spec's units. Format details: [docs/scenarios.md](docs/scenari
 - HITL over serial is wired into the bridge but not yet tested on a Pixhawk.
 - Python frame timing on a stock (non-RT) kernel shows occasional overruns: a
   107 s realtime run on a shared cloud VM had 35 overruns of 26,780 frames
-  (worst start lateness 10.7 ms at a 4 ms period). That is the baseline M2 has
-  to beat on PREEMPT_RT.
+  (worst start lateness 10.7 ms at a 4 ms period). That is the baseline M4 and M7 have
+  to beat.
 
 ## Repo layout
 
@@ -159,27 +159,33 @@ open-hwil-testbed/
   hwil/              Python package: executive, JSBSim wrapper, sensors,
                      builtin controller, MAVLink bridge (hwil/bridge),
                      manifest, requirements grading, reports, CLI
-  executive/         reserved for the C++ / NASA Trick executive (M2, M5)
+  executive/         reserved for the C++ / NASA Trick executive (M4, M6)
   models/            JSBSim model overlays (F450 drag), later sensor FMUs
   scenarios/         YAML scenario files
   tests/             pytest suite, including RTAMT-graded scenario tests
-  tools/             helper scripts (log tools, anomaly detection in M6)
+  tools/             helper scripts (log tools, anomaly detection in M5)
   ci/                scripts used by CI and the bench (PX4 SITL launcher)
   .github/workflows/ GitHub Actions (SIL tests on every push)
 ```
 
 ## Milestones
 
-| # | Milestone | Done when | Status |
-|---|---|---|---|
-| M0 | Repo, license, README, ground rules | Public repo exists with the brief | done |
-| M1 | SIL loop: JSBSim + PX4 SITL, scripted takeoff/loiter/land | One command runs a scenario and produces plots | done |
-| M2 | Real-time baseline on PREEMPT_RT | cyclictest and in-loop jitter report; overrun counter in logs | overrun counter and timing log in place |
-| M3 | HITL with a real Pixhawk | Same scenario passes in SIL and HITL; end-to-end latency measured | serial-link option in the bridge, untested |
-| M4 | Test harness | 10+ scenario tests with STL-graded requirements and an HTML report per run | 2 scenarios, 8 requirements, HTML report per run |
-| M5 | Executive upgrade to NASA Trick (optional) | Trick runs the loop with Monte Carlo in SIL | |
-| M6 | AI-in-test add-on | Anomaly detection over run logs, plus LLM-drafted test cases reviewed by a human | |
-| M7 | Write-up | Blog post or paper draft on lab engineering lessons | |
+Reordered on 2026-11-09: everything that needs no hardware comes first
+(M2 to M6), so the project keeps moving before the bench exists. The hardware
+milestones (M7, M8) reuse all of it unchanged.
+
+| # | Milestone | Needs hardware | Done when | Status |
+|---|---|---|---|---|
+| M0 | Repo, license, README, ground rules | no | Public repo exists with the brief | done |
+| M1 | SIL loop: JSBSim + PX4 SITL, scripted takeoff/loiter/land | no | One command runs a scenario and produces plots | done |
+| M2 | Test harness | no | 10+ scenarios with STL-graded requirements, an HTML report per run and a suite report, for both builtin and PX4 SITL | in progress |
+| M3 | Monte Carlo in SIL | no | Batch runs over wind, sensor-noise and fault dispersions, in parallel, with pass-rate and margin statistics | |
+| M4 | Compiled executive and timing tooling | no | C++ fixed-rate loop with JSBSim, same scenarios and logs as Python; jitter and overrun report on a stock kernel; bridge latency measured in SITL | |
+| M5 | AI-in-test add-on | no | Anomaly detection over run logs, plus LLM-drafted test cases reviewed by a human | |
+| M6 | NASA Trick executive (optional) | no | Trick runs the loop with Monte Carlo of wind and sensor-noise cases in SIL | |
+| M7 | Real-time baseline on PREEMPT_RT | Linux PC | cyclictest and in-loop jitter report; no overruns in a 30-minute run | overrun counter and timing log in place |
+| M8 | HITL with a real Pixhawk | Pixhawk | Same scenarios pass in SIL and HITL within stated tolerances; end-to-end latency measured | serial-link option in the bridge, untested |
+| M9 | Write-up | no | Blog post or paper draft on lab engineering lessons | |
 
 The full project brief is in [docs/brief.md](docs/brief.md).
 
