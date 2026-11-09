@@ -22,11 +22,13 @@ def _run(name, tmp_path, **overrides):
     return run_dir
 
 
-def test_baseline_shape():
-    assert BASELINE["controllers"] == ["builtin"]
+@pytest.mark.parametrize("ctrl", ["builtin", "px4"])
+def test_shipped_baselines(ctrl):
+    base = json.loads(an.default_baseline(ctrl).read_text())
+    assert base["controllers"] == [ctrl]
     for f in an.FEATURE_NAMES:
         for g in an.GROUPS:
-            s = BASELINE["stats"][f][g]
+            s = base["stats"][f][g]
             assert s["spread"] >= an.FEATURES[f][2]
 
 

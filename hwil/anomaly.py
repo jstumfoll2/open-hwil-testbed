@@ -162,10 +162,25 @@ def _controller(run_dir: Path) -> str:
         return "unknown"
 
 
-def fit(paths: list[str | Path]) -> dict:
-    runs = find_runs(paths)
+def _healthy(run_dir: Path) -> bool:
+    """True unless the manifest says the run aborted or failed a requirement."""
+    try:
+        res = json.loads((run_dir / "manifest.json").read_text()).get("results", {})
+    except (OSError, ValueError):
+        return True
+    if res.get("aborted"):
+        return False
+    return all(r.get("passed", True) for r in res.get("requirements", []))
+
+
+def fit(paths: list[str | Path], include_failed: bool = False) -> dict:
+    """Fit a baseline. Runs that aborted or failed a requirement are left out
+    unless include_failed is set, so a tip-over in a dispersed batch does not
+    widen the nominal envelope."""
+    found = find_runs(paths)
+    runs = found if include_failed else [r for r in found if _healthy(r)]
     if not runs:
-        raise ValueError("no run folders with log.csv found")
+        raise ValueError("no usable run folders with log.csv found")
     ctrls = sorted({_controller(r) for r in runs})
     per_run = []
     for r in runs:
@@ -203,6 +218,7 @@ def fit(paths: list[str | Path]) -> dict:
         "controllers": ctrls,
         "runs": [r.name for r in runs],
         "n_runs": len(runs),
+        "n_excluded": len(found) - len(runs),
         "block_s": BLOCK_S,
         "thrust_curve": coef,
         "features": {k: {"description": FEATURES[k][0], "unit": FEATURES[k][1]} for k in FEATURE_NAMES},

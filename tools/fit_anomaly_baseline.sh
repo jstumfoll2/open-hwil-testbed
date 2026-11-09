@@ -2,6 +2,8 @@
 # Regenerate models/anomaly/baseline_builtin.json from nominal runs:
 # the eight fault-free scenarios plus 60 Monte Carlo runs of wind,
 # turbulence and sensor noise. Takes a few minutes with 4 jobs.
+# For the PX4 baseline, run the same suite and batch (40 runs) with
+# --controller px4 --px4-dir <PX4-Autopilot> and fit into baseline_px4.json.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 OUT=${1:-runs/anomaly_train}

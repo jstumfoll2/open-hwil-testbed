@@ -80,16 +80,33 @@ onset. In 64 of the 80 runs, the detector caught the fault while every
 requirement still passed. Those are degraded vehicles the STL suite alone would
 call healthy.
 
+## Results (PX4 v1.15.4 SITL)
+
+`models/anomaly/baseline_px4.json` was fitted the same way, from PX4 SITL runs
+of the eight fault-free scenarios plus 40 dispersed `hold_wind_and_noise` runs.
+`fit` leaves out any run that aborted or failed a requirement, which removed 6 of
+the 48 runs. Most of those were ground tip-overs in strong wind, the known F450
+limitation. `score` picks the baseline that matches each run's controller.
+
+- **Clean runs.** None of 15 held-out PX4 runs (seed 5000) was flagged. The
+  largest score was |z| = 8.8, for less than 1 s.
+- **Fault scenarios.** The results match the builtin controller's: motor loss
+  flagged from 30.1 s (torque, z ≈ 18), GPS dropout from 40.4 s to 50.7 s, baro
+  bias from 40.4 s. `hold_with_faults` was flagged from 31.5 s, with all three
+  faults in turn.
+- **IMU bias.** PX4 flies on its IMU, but the constant bias in `imu_bias`
+  stays inside the nominal envelope, so it is not flagged.
+
 ## Limits
 
-- **Builtin controller only.** The shipped baseline is fitted on runs with
-  the builtin controller. PX4 flies differently, so a PX4 baseline needs PX4
-  runs (`hwil anomaly fit` on a PX4 suite or Monte Carlo batch). The scorer
-  warns when a run's controller does not match the baseline.
-- **IMU bias is invisible here.** The builtin controller flies on true
+- **One baseline per controller.** The builtin and PX4 controllers fly
+  differently, so each has its own baseline. The scorer warns when a run's
+  controller does not match the baseline it is given.
+- **IMU bias is not detected.** The builtin controller flies on true
   state, and the log records true rates and accelerations, so an IMU bias has no
-  effect to detect. With PX4, the bias would show up through its effect on
-  the flight.
+  effect to see. With PX4, the bias in `imu_bias` (0.1 to 0.15 m/s², 0.01 rad/s)
+  stays inside the envelope. Logging the raw sensor values would allow an
+  IMU-against-truth residual.
 - **The baseline only knows the conditions it was fitted on.** A run in
   conditions outside the nominal set, such as stronger wind or a different
   airframe, can be flagged without a fault. Refit with nominal runs covering

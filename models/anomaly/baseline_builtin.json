@@ -74,6 +74,7 @@
   "20261109T161713Z_out_and_back_fast_08d785b7"
  ],
  "n_runs": 68,
+ "n_excluded": 0,
  "block_s": 0.1,
  "thrust_curve": [
   -0.0043173789273550055,

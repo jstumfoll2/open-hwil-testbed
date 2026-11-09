@@ -1,0 +1,209 @@
+{
+ "version": 1,
+ "controllers": [
+  "px4"
+ ],
+ "runs": [
+  "run0000",
+  "run0001",
+  "run0002",
+  "run0003",
+  "run0004",
+  "run0006",
+  "run0007",
+  "run0008",
+  "run0009",
+  "run0010",
+  "run0011",
+  "run0013",
+  "run0014",
+  "run0015",
+  "run0016",
+  "run0017",
+  "run0018",
+  "run0019",
+  "run0020",
+  "run0021",
+  "run0022",
+  "run0023",
+  "run0024",
+  "run0025",
+  "run0026",
+  "run0027",
+  "run0028",
+  "run0029",
+  "run0031",
+  "run0032",
+  "run0034",
+  "run0035",
+  "run0038",
+  "run0039",
+  "20261109T163529Z_takeoff_hold_land_81db43dc",
+  "20261109T163600Z_waypoint_square_e3bc9005",
+  "20261109T163629Z_altitude_steps_a3cda8da",
+  "20261109T163656Z_crosswind_hold_2b68b078",
+  "20261109T163725Z_long_hold_60m_7582ffde",
+  "20261109T163815Z_noisy_sensors_29e03fe3",
+  "20261109T163841Z_high_elevation_home_c3497e51",
+  "20261109T163906Z_out_and_back_fast_aba35373"
+ ],
+ "n_runs": 42,
+ "n_excluded": 6,
+ "block_s": 0.1,
+ "thrust_curve": [
+  0.00039468248800704833,
+  0.014759763682902643,
+  0.23638132720480687
+ ],
+ "features": {
+  "torque_roll": {
+   "description": "roll torque demand from the motor mix (2 s mean)",
+   "unit": "cmd"
+  },
+  "torque_pitch": {
+   "description": "pitch torque demand from the motor mix (2 s mean)",
+   "unit": "cmd"
+  },
+  "torque_yaw": {
+   "description": "yaw torque demand from the motor mix (2 s mean)",
+   "unit": "cmd"
+  },
+  "thrust_resid": {
+   "description": "collective command beyond what the measured lift needs (2 s mean)",
+   "unit": "cmd"
+  },
+  "baro_resid": {
+   "description": "baro altitude minus true altitude, start-up offset removed (2 s mean)",
+   "unit": "m"
+  },
+  "gps_invalid": {
+   "description": "share of the last second without a valid GPS fix",
+   "unit": ""
+  },
+  "rate_noise": {
+   "description": "body-rate noise, std of p, q, r over 1 s",
+   "unit": "rad/s"
+  }
+ },
+ "stats": {
+  "torque_roll": {
+   "ground": {
+    "median": 0.0,
+    "spread": 0.002,
+    "n": 1262
+   },
+   "climb_descent": {
+    "median": 0.0,
+    "spread": 0.002,
+    "n": 18121
+   },
+   "cruise": {
+    "median": 2.0003624999952175e-06,
+    "spread": 0.002,
+    "n": 25097
+   }
+  },
+  "torque_pitch": {
+   "ground": {
+    "median": 0.0,
+    "spread": 0.002,
+    "n": 1262
+   },
+   "climb_descent": {
+    "median": 0.0,
+    "spread": 0.002,
+    "n": 18121
+   },
+   "cruise": {
+    "median": 5.002460000039542e-07,
+    "spread": 0.002,
+    "n": 25097
+   }
+  },
+  "torque_yaw": {
+   "ground": {
+    "median": 0.0,
+    "spread": 0.002,
+    "n": 1262
+   },
+   "climb_descent": {
+    "median": 0.0,
+    "spread": 0.002,
+    "n": 18121
+   },
+   "cruise": {
+    "median": 9.996239999419606e-07,
+    "spread": 0.0030526513281767267,
+    "n": 25097
+   }
+  },
+  "thrust_resid": {
+   "ground": {
+    "median": 0.0,
+    "spread": 0.005,
+    "n": 1262
+   },
+   "climb_descent": {
+    "median": 0.0,
+    "spread": 0.0076237340581272305,
+    "n": 18121
+   },
+   "cruise": {
+    "median": -0.00176790814690857,
+    "spread": 0.009261155808453674,
+    "n": 25097
+   }
+  },
+  "baro_resid": {
+   "ground": {
+    "median": -0.0013388550763167473,
+    "spread": 0.15,
+    "n": 1262
+   },
+   "climb_descent": {
+    "median": -0.0002021420205664981,
+    "spread": 0.15,
+    "n": 18121
+   },
+   "cruise": {
+    "median": -0.00044671083956870916,
+    "spread": 0.15,
+    "n": 25097
+   }
+  },
+  "gps_invalid": {
+   "ground": {
+    "median": 0.0,
+    "spread": 0.05,
+    "n": 1262
+   },
+   "climb_descent": {
+    "median": 0.0,
+    "spread": 0.05,
+    "n": 18121
+   },
+   "cruise": {
+    "median": 0.0,
+    "spread": 0.05,
+    "n": 25097
+   }
+  },
+  "rate_noise": {
+   "ground": {
+    "median": 0.005752405087539113,
+    "spread": 0.04446696367625148,
+    "n": 1262
+   },
+   "climb_descent": {
+    "median": 0.010405959167716911,
+    "spread": 0.0823211614382875,
+    "n": 18121
+   },
+   "cruise": {
+    "median": 0.009958749438422674,
+    "spread": 0.01,
+    "n": 25097
+   }
+  }
+ }
+}

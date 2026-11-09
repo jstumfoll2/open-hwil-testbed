@@ -95,11 +95,12 @@ def _cmd_timing(a) -> int:
 def _cmd_anomaly_fit(a) -> int:
     from . import anomaly
 
-    base = anomaly.fit(a.runs)
+    base = anomaly.fit(a.runs, include_failed=a.include_failed)
     out = Path(a.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(base, indent=1), encoding="utf-8")
-    print(f"baseline    : {out} from {base['n_runs']} run(s), controller {', '.join(base['controllers'])}")
+    print(f"baseline    : {out} from {base['n_runs']} run(s), controller {', '.join(base['controllers'])}"
+          f" ({base['n_excluded']} aborted or failing run(s) left out)")
     return 0
 
 
@@ -216,6 +217,8 @@ def main(argv: list[str] | None = None) -> int:
     af = an_sub.add_parser("fit", help="fit a baseline from nominal run folders or batch folders")
     af.add_argument("runs", nargs="+")
     af.add_argument("--out", default="anomaly_baseline.json")
+    af.add_argument("--include-failed", action="store_true",
+                    help="also fit on runs that aborted or failed a requirement")
     af.set_defaults(func=_cmd_anomaly_fit)
     asc = an_sub.add_parser("score", help="score run folders against a baseline")
     asc.add_argument("runs", nargs="+")
