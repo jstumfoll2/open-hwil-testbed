@@ -28,7 +28,7 @@ from pymavlink import mavutil  # noqa: E402
 
 from ..controllers import SensorFrame  # noqa: E402
 from ..fdm import State  # noqa: E402
-from ..mission import MissionSequencer  # noqa: E402
+from ..mission import GOTO_DEFAULTS, MissionSequencer, ned_to_latlon  # noqa: E402
 
 mavlink = mavutil.mavlink
 
@@ -126,9 +126,10 @@ class Px4Controller:
                 fval = float(value)
             self.gcs.mav.param_set_send(self.gcs.target_system, 1, name.encode(), fval, ptype)
 
-    def _queue(self, cmd: int, params: list[float], label: str, t: float) -> None:
+    def _queue(self, cmd: int, params: list[float], label: str, t: float, as_int: bool = False) -> None:
+        """Queue a command. ``as_int`` sends COMMAND_INT (params 5/6 are lat/lon in degE7)."""
         self._pending.append({"cmd": cmd, "params": params, "label": label, "done": False,
-                              "next_try": t, "result": None, "tries": 0})
+                              "next_try": t, "result": None, "tries": 0, "as_int": as_int})
 
     def _service_commands(self, t: float) -> None:
         if self.gcs.target_system == 0:
@@ -146,7 +147,12 @@ class Px4Controller:
             return
         p["tries"] += 1
         p["next_try"] = t + 1.0
-        self.gcs.mav.command_long_send(self.gcs.target_system, 1, p["cmd"], 0, *p["params"])
+        if p["as_int"]:
+            q = p["params"]
+            self.gcs.mav.command_int_send(self.gcs.target_system, 1, mavlink.MAV_FRAME_GLOBAL, p["cmd"], 0, 0,
+                                          q[0], q[1], q[2], q[3], int(q[4]), int(q[5]), q[6])
+        else:
+            self.gcs.mav.command_long_send(self.gcs.target_system, 1, p["cmd"], 0, *p["params"])
         self.stats["commands"].append({"t": round(t, 3), "cmd": p["label"], "try": p["tries"],
                                        "last_result": p["result"]})
 
@@ -214,6 +220,15 @@ class Px4Controller:
             self._queue(mavlink.MAV_CMD_COMPONENT_ARM_DISARM, [1, 0, 0, 0, 0, 0, 0], "arm", s.t + 0.5)
             self._queue(mavlink.MAV_CMD_NAV_TAKEOFF, [0, 0, 0, float("nan"), float("nan"), float("nan"), alt_msl],
                         "takeoff", s.t + 0.5)
+        elif phase == "goto":
+            home = self.sc["initial"]
+            lat, lon = ned_to_latlon(home["lat_deg"], home["lon_deg"], *self.mission.ne_target)
+            alt_msl = home["ground_alt_msl_m"] + self.mission.alt_target
+            speed = float(spec.get("speed_mps", GOTO_DEFAULTS["speed_mps"]))
+            # MAV_CMD_DO_REPOSITION: speed, flags (1 = switch to reposition mode), -, yaw (NaN = keep)
+            self._queue(mavlink.MAV_CMD_DO_REPOSITION,
+                        [speed, 1, 0, float("nan"), round(lat * 1e7), round(lon * 1e7), alt_msl],
+                        "goto", s.t, as_int=True)
         elif phase == "land":
             self._queue(mavlink.MAV_CMD_NAV_LAND, [0, 0, 0, float("nan"), float("nan"), float("nan"), float("nan")],
                         "land", s.t)

@@ -97,6 +97,23 @@ def make_plots(run_dir: Path) -> list[str]:
     plt.close(fig)
     files.append("motors.png")
 
+    fig, ax = plt.subplots(figsize=(5.5, 5.5), facecolor=SURFACE)
+    ax.plot(log["e_m"], log["n_m"], color=SERIES[0], linewidth=1.5, label="flown track")
+    if "n_cmd_m" in log:
+        pts = np.unique(np.round(np.column_stack([log["e_cmd_m"], log["n_cmd_m"]]), 3), axis=0)
+        ax.scatter(pts[:, 0], pts[:, 1], s=64, facecolor=SURFACE, edgecolor=INK_2, linewidth=1.5,
+                   zorder=3, label="commanded points")
+    ax.scatter([0], [0], marker="s", s=48, color=INK_2, zorder=4, label="home")
+    _style(ax, "north (m)")
+    ax.set_xlabel("east (m)", color=INK_2, fontsize=9)
+    ax.set_aspect("equal", adjustable="datalim")
+    ax.set_title("Ground track", loc="left", color=INK, fontsize=11)
+    ax.legend(loc="best", fontsize=8, frameon=False)
+    fig.tight_layout()
+    fig.savefig(run_dir / "track.png", dpi=120, facecolor=SURFACE)
+    plt.close(fig)
+    files.append("track.png")
+
     timing = np.loadtxt(run_dir / "timing.csv", delimiter=",", skiprows=1, ndmin=2)
     fig, ax = plt.subplots(figsize=(9, 3.2), facecolor=SURFACE)
     compute = timing[:, 3]

@@ -33,6 +33,9 @@ DERIVED = {
     "alt_err_m": "alt_m - alt_cmd_m",
     "hspeed_mps": "horizontal ground speed",
     "hdist_m": "horizontal distance from home",
+    "hdist_cmd_m": "horizontal distance from the commanded point (goto target or hold point)",
+    "pos_err_m": "3-D distance from the commanded point",
+    "goto": "+BIG during a goto phase, else -BIG (use as `goto > 0`)",
     "tilt_deg": "angle between body z and vertical",
 }
 
@@ -60,6 +63,10 @@ def signals_from_log(log: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
     sig["alt_err_m"] = log["alt_m"] - log["alt_cmd_m"]
     sig["hspeed_mps"] = np.hypot(log["vn_mps"], log["ve_mps"])
     sig["hdist_m"] = np.hypot(log["n_m"], log["e_m"])
+    if "n_cmd_m" in log:
+        sig["hdist_cmd_m"] = np.hypot(log["n_m"] - log["n_cmd_m"], log["e_m"] - log["e_cmd_m"])
+        sig["pos_err_m"] = np.sqrt(sig["hdist_cmd_m"] ** 2 + (log["alt_m"] - log["alt_cmd_m"]) ** 2)
+    sig["goto"] = np.where(log["phase"] == 5, BIG, -BIG)
     sig["tilt_deg"] = np.degrees(np.arccos(np.clip(np.cos(log["roll_rad"]) * np.cos(log["pitch_rad"]), -1, 1)))
     return sig
 
@@ -92,9 +99,10 @@ def grade(requirements: list[dict], log: dict[str, np.ndarray], sample_hz: float
     out = []
     for r in requirements:
         rob = evaluate(r["stl"], sig, sample_hz)
-        # A robustness of +BIG or infinity means the guard never held (for
-        # example the vehicle never loitered, or the run ended before the time
-        # window). That requirement was not exercised, so it does not pass.
-        vacuous = (not math.isfinite(rob)) or rob >= BIG / 2
+        # Infinity means the time window lies beyond the end of the run. For a
+        # guarded spec ("guard -> phi"), +BIG means the guard never held (for
+        # example the vehicle never loitered). Either way the requirement was
+        # not exercised, so it does not pass.
+        vacuous = (not math.isfinite(rob)) or ("->" in r["stl"] and rob >= BIG / 2)
         out.append(RequirementResult(r["id"], r["text"], r["stl"], rob, rob > 0 and not vacuous, vacuous))
     return out

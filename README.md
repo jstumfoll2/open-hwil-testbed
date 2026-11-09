@@ -10,11 +10,12 @@ The vehicle is a small, generic, civilian quadcopter (the public JSBSim F450
 model). The flight controller is PX4: PX4 SITL first, then a real Pixhawk in
 HITL mode.
 
-> **Status:** M0 (repo, license, ground rules) and M1 (software-in-the-loop
-> loop, one command per scenario, logs and plots) are done. PX4 v1.15.4 SITL
-> flies both scenarios through the MAVLink HIL bridge in lockstep and passes
-> the same STL requirements as the builtin controller.
-> Next: M2 (test harness), then the rest of the software-only milestones. See [Milestones](#milestones).
+> **Status:** M0 to M3 are done. 13 scenarios with 50 STL requirements
+> pass with both the builtin controller and PX4 v1.15.4 SITL in lockstep
+> through the MAVLink HIL bridge, and Monte Carlo batches map where they stop
+> passing (for example, below 43 % thrust on one motor). All
+> software-only milestones come before the hardware ones; see
+> [Milestones](#milestones).
 
 ## Ground rules
 
@@ -44,8 +45,10 @@ cd open-hwil-testbed
 python3.12 -m venv .venv && . .venv/bin/activate
 pip install -e ".[dev]"
 
-hwil run scenarios/takeoff_hold_land.yaml     # about 4 s of wall time
-pytest                                        # about 15 s; PX4 tests skip without PX4
+hwil run scenarios/takeoff_hold_land.yaml     # one scenario, about 4 s of wall time
+hwil suite scenarios/*.yaml --jobs 4          # all 13, with a suite report
+hwil montecarlo montecarlo/motor_loss_sweep.yaml --runs 40 --jobs 4   # dispersed batch
+pytest                                        # about 2 min; PX4 tests skip without PX4
 ```
 
 `hwil run` prints a summary and writes a run folder under `runs/`:
@@ -55,7 +58,7 @@ pytest                                        # about 15 s; PX4 tests skip witho
 | `manifest.json` | git commit and dirty flag, config hash, seed, package versions, kernel and PREEMPT_RT flag, the fully resolved scenario, results, SHA-256 of every output |
 | `log.csv` | one row per frame: state, commanded altitude, motor commands, wind, sensor values |
 | `timing.csv` | per-frame lateness, compute time, controller I/O wait, overrun flag |
-| `flight.png`, `motors.png`, `timing.png` | plots |
+| `flight.png`, `track.png`, `motors.png`, `timing.png` | plots |
 | `report.html` | summary, requirement results with robustness margins, plots, manifest |
 
 Re-run any run from its manifest alone and check that it matches:
@@ -120,8 +123,8 @@ More in [docs/architecture.md](docs/architecture.md).
 ## Scenarios and requirements
 
 A scenario is one YAML file with initial conditions, wind and turbulence,
-sensor noise, a mission (`takeoff`, `hold`, `land`), timed faults (motor
-efficiency loss, GPS dropout, baro bias) and requirements written in STL:
+sensor noise, a mission (`takeoff`, `goto`, `hold`, `land`), timed faults
+(motor efficiency loss, GPS dropout, baro bias) and requirements written in STL:
 
 ```yaml
 requirements:
@@ -132,6 +135,22 @@ requirements:
 
 Each requirement passes when its robustness is positive, and the robustness is
 the margin in the spec's units. Format details: [docs/scenarios.md](docs/scenarios.md).
+
+| Scenario | What it exercises |
+|---|---|
+| `takeoff_hold_land` | M1 reference: 20 m loiter in a light breeze |
+| `altitude_steps` | climbs and descents between 10, 30 and 15 m |
+| `waypoint_square` | four 30 m legs with pauses at the corners |
+| `out_and_back_fast` | 80 m transit at 7 m/s and back |
+| `crosswind_hold` | position hold in a steady 5 m/s crosswind |
+| `long_hold_60m` | two-minute loiter at 60 m |
+| `high_elevation_home` | home at 1650 m, facing east, local magnetic field |
+| `motor_degraded` | one motor drops to 75 % efficiency in flight |
+| `gps_dropout_hold` | 10 s GPS outage while holding |
+| `baro_bias_step` | baro reads about 5 m low from mid-hold |
+| `imu_bias` | constant accelerometer and gyro biases |
+| `noisy_sensors` | four times the default noise on every sensor |
+| `hold_with_faults` | motor loss, GPS dropout and baro step in one flight |
 
 ## Known limitations
 
@@ -162,6 +181,7 @@ open-hwil-testbed/
   executive/         reserved for the C++ / NASA Trick executive (M4, M6)
   models/            JSBSim model overlays (F450 drag), later sensor FMUs
   scenarios/         YAML scenario files
+  montecarlo/        Monte Carlo batch definitions (dispersions over a scenario)
   tests/             pytest suite, including RTAMT-graded scenario tests
   tools/             helper scripts (log tools, anomaly detection in M5)
   ci/                scripts used by CI and the bench (PX4 SITL launcher)
@@ -178,8 +198,8 @@ milestones (M7, M8) reuse all of it unchanged.
 |---|---|---|---|---|
 | M0 | Repo, license, README, ground rules | no | Public repo exists with the brief | done |
 | M1 | SIL loop: JSBSim + PX4 SITL, scripted takeoff/loiter/land | no | One command runs a scenario and produces plots | done |
-| M2 | Test harness | no | 10+ scenarios with STL-graded requirements, an HTML report per run and a suite report, for both builtin and PX4 SITL | in progress |
-| M3 | Monte Carlo in SIL | no | Batch runs over wind, sensor-noise and fault dispersions, in parallel, with pass-rate and margin statistics | |
+| M2 | Test harness | no | 10+ scenarios with STL-graded requirements, an HTML report per run and a suite report, for both builtin and PX4 SITL | done: 13 scenarios, 50 requirements, all pass with both |
+| M3 | Monte Carlo in SIL | no | Batch runs over wind, sensor-noise and fault dispersions, in parallel, with pass-rate and margin statistics | done: see [docs/montecarlo.md](docs/montecarlo.md) |
 | M4 | Compiled executive and timing tooling | no | C++ fixed-rate loop with JSBSim, same scenarios and logs as Python; jitter and overrun report on a stock kernel; bridge latency measured in SITL | |
 | M5 | AI-in-test add-on | no | Anomaly detection over run logs, plus LLM-drafted test cases reviewed by a human | |
 | M6 | NASA Trick executive (optional) | no | Trick runs the loop with Monte Carlo of wind and sensor-noise cases in SIL | |

@@ -1,0 +1,25 @@
+# One motor loses 25 % of its efficiency in flight.
+name: motor_degraded
+description: Take off to 15 m; at 30 s the aft-left motor drops to 75 % efficiency; hold 40 s, then land.
+seed: 6
+sim: {duration_s: 150}
+wind: {north_mps: 2.0, turbulence_severity: 1}
+mission:
+  - {type: takeoff, alt_m: 15.0}
+  - {type: hold, duration_s: 40.0}
+  - {type: land}
+faults:
+  - {type: motor_efficiency, motor: 1, factor: 0.75, t_s: 30.0}
+requirements:
+  - id: REQ-MOT-001
+    text: After the fault, altitude stays within 3 m of the commanded altitude while loitering.
+    stl: "always((loiter > 0) -> (abs(alt_err_m) <= 3.0))"
+  - id: REQ-MOT-002
+    text: Tilt never exceeds 20 degrees.
+    stl: "always(tilt_deg <= 20.0)"
+  - id: REQ-MOT-003
+    text: While loitering, the vehicle stays within 3 m horizontally of the hold point.
+    stl: "always((loiter > 0) -> (hdist_cmd_m <= 3.0))"
+  - id: REQ-LAND-012
+    text: The vehicle lands and disarms within 3 m of home.
+    stl: "eventually((landed > 0) and (hdist_m <= 3.0))"

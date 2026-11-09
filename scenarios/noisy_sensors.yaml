@@ -1,0 +1,28 @@
+# Four times the default sensor noise on every sensor.
+name: noisy_sensors
+description: Takeoff, hold and land with 4x the default IMU, baro, mag and GPS noise.
+seed: 10
+sim: {duration_s: 150}
+wind: {north_mps: 1.0, turbulence_severity: 1}
+sensors:
+  imu: {accel_noise_mps2: 0.08, gyro_noise_rps: 0.008}
+  baro: {noise_hpa: 0.04}
+  mag: {noise_gauss: 0.008}
+  gps: {noise_h_m: 1.2, noise_v_m: 2.0, noise_vel_mps: 0.2}
+mission:
+  - {type: takeoff, alt_m: 15.0}
+  - {type: hold, duration_s: 45.0}
+  - {type: land}
+requirements:
+  - id: REQ-NOISE-001
+    text: While loitering, the vehicle stays within 4 m horizontally of the hold point.
+    stl: "always((loiter > 0) -> (hdist_cmd_m <= 4.0))"
+  - id: REQ-NOISE-002
+    text: While loitering, altitude stays within 3 m of the commanded altitude.
+    stl: "always((loiter > 0) -> (abs(alt_err_m) <= 3.0))"
+  - id: REQ-NOISE-003
+    text: Tilt never exceeds 15 degrees.
+    stl: "always(tilt_deg <= 15.0)"
+  - id: REQ-LAND-016
+    text: The vehicle lands and disarms within 4 m of home.
+    stl: "eventually((landed > 0) and (hdist_m <= 4.0))"

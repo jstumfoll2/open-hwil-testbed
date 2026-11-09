@@ -39,7 +39,7 @@ def test_stl_catches_a_violation(reference_run):
 
 def test_outputs_exist(reference_run):
     run_dir, man = reference_run
-    for name in ("log.csv", "timing.csv", "manifest.json", "report.html", "flight.png", "motors.png", "timing.png"):
+    for name in ("log.csv", "timing.csv", "manifest.json", "report.html", "flight.png", "motors.png", "timing.png", "track.png"):
         assert (run_dir / name).is_file(), name
     assert man["results"]["timing"]["frames"] > 0
 

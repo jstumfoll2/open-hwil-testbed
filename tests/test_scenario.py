@@ -7,7 +7,7 @@ from conftest import SCENARIOS
 
 def test_all_scenario_files_validate():
     files = sorted(SCENARIOS.glob("*.yaml"))
-    assert files
+    assert len(files) >= 10, "M2 asks for at least 10 scenarios"
     for f in files:
         scn.load(f)
 
@@ -31,7 +31,19 @@ def test_config_hash_is_order_independent():
     {"mission": [{"type": "takeoff", "alt_m": 500}]},
     {"faults": [{"type": "unknown"}]},
     {"requirements": [{"id": "R1", "text": "no spec"}]},
+    {"mission": [{"type": "goto", "north_m": 5}]},
+    {"mission": [{"type": "takeoff", "alt_m": 10}, {"type": "goto", "north_m": 5000}]},
+    {"mission": [{"type": "takeoff", "alt_m": 10}, {"type": "takeoff", "alt_m": 20}]},
+    {"mission": [{"type": "takeoff", "alt_m": 10}, {"type": "goto", "north_m": 5, "speed_mps": 50}]},
 ])
 def test_bad_scenarios_rejected(bad):
     with pytest.raises(scn.ScenarioError):
         scn.resolve(bad)
+
+
+def test_requirement_ids_are_unique():
+    seen = {}
+    for f in sorted(SCENARIOS.glob("*.yaml")):
+        for r in scn.load(f)["requirements"]:
+            assert r["id"] not in seen, f"{r['id']} used in {seen.get(r['id'])} and {f.name}"
+            seen[r["id"]] = f.name

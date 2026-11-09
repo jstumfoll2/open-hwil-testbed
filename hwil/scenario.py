@@ -66,7 +66,8 @@ DEFAULTS: dict[str, Any] = {
     "requirements": [],
 }
 
-MISSION_TYPES = {"takeoff", "hold", "land"}
+MISSION_TYPES = {"takeoff", "goto", "hold", "land"}
+MAX_RANGE_M = 300.0
 FAULT_TYPES = {"motor_efficiency", "gps_dropout", "baro_bias"}
 
 
@@ -114,6 +115,20 @@ def validate(sc: dict) -> None:
             raise ScenarioError(f"mission[{i}]: takeoff alt_m must be 1..120 m")
         if t == "hold" and float(ph.get("duration_s", 0)) <= 0:
             raise ScenarioError(f"mission[{i}]: hold needs a positive duration_s")
+        if t == "takeoff" and i != 0:
+            raise ScenarioError(f"mission[{i}]: takeoff must be the first phase (use goto to change altitude)")
+        if t == "goto":
+            if i == 0:
+                raise ScenarioError("mission[0]: goto needs a takeoff first")
+            for key in ("north_m", "east_m"):
+                if abs(float(ph.get(key, 0.0))) > MAX_RANGE_M:
+                    raise ScenarioError(f"mission[{i}]: {key} must be within {MAX_RANGE_M:.0f} m of home")
+            if "alt_m" in ph and not (1.0 <= float(ph["alt_m"]) <= 120.0):
+                raise ScenarioError(f"mission[{i}]: goto alt_m must be 1..120 m")
+            if not (0.5 <= float(ph.get("speed_mps", 3.0)) <= 10.0):
+                raise ScenarioError(f"mission[{i}]: goto speed_mps must be 0.5..10")
+        if t in ("hold", "land") and i == 0:
+            raise ScenarioError(f"mission[0]: {t} needs a takeoff first")
     for i, f in enumerate(sc["faults"]):
         if f.get("type") not in FAULT_TYPES:
             raise ScenarioError(f"faults[{i}]: type must be one of {sorted(FAULT_TYPES)}")

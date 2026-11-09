@@ -36,6 +36,7 @@ LOG_COLUMNS = [
     "wind_n_mps", "wind_e_mps", "wind_d_mps",
     "lat_deg", "lon_deg",
     "baro_alt_m", "gps_valid",
+    "n_cmd_m", "e_cmd_m",
 ]
 
 TIMING_COLUMNS = ["frame", "t_sim", "late_us", "compute_us", "io_wait_us", "overrun"]
@@ -167,13 +168,14 @@ class Executive:
             if gps is not None:
                 gps_valid = 1.0 if gps.valid else 0.0
             mi = self.ctrl.mission
-            alt_cmd = mi.alt_target if sp_phase in ("takeoff", "hold", "hold_end") else 0.0
+            alt_cmd = mi.alt_target if sp_phase in ("takeoff", "goto", "hold", "hold_end") else 0.0
             log[n] = [
                 s.t, PHASE_IDS.get(sp_phase, PHASE_IDS["hold"]), mi.idx,
                 *s.pos_ned, s.alt_m, alt_cmd, s.alt_agl_m,
                 *s.vel_ned, *s.euler, *s.rates_body, *s.accel_body,
                 *self.fdm.motor_cmd, *s.wind_ned, s.lat_deg, s.lon_deg,
                 last_baro_alt, gps_valid,
+                mi.ne_target[0], mi.ne_target[1],
             ]
             end = time.perf_counter_ns()
             compute_us = (end - start) / 1e3 - io_wait_us

@@ -7,5 +7,7 @@ package so they are importable from tests:
 - plots and `report.html` (`hwil/report.py`)
 - STL grading of any `log.csv` (`hwil/requirements.py`)
 
-Planned here: batch summaries across many runs (M2, M3), and log anomaly detection
-(M5).
+- `hwil suite` and `hwil montecarlo` for many runs at once (`hwil/suite.py`,
+  `hwil/montecarlo.py`)
+
+Planned here: log anomaly detection (M5).

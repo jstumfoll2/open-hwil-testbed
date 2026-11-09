@@ -27,6 +27,10 @@ jobs:
         run: |
           hwil run scenarios/takeoff_hold_land.yaml --out runs
           hwil reproduce runs/*/manifest.json --out runs
+      - name: Suite report over every scenario
+        run: hwil suite scenarios/*.yaml --jobs 4 --no-plots --out runs
+      - name: Small Monte Carlo batch
+        run: hwil montecarlo montecarlo/motor_loss_sweep.yaml --runs 24 --jobs 4 --out runs
       - name: Upload run folders
         if: always()
         uses: actions/upload-artifact@v4

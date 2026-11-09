@@ -1,0 +1,24 @@
+# Constant accelerometer and gyro biases from power-on.
+name: imu_bias
+description: Fly takeoff, hold and land with constant IMU biases of 0.1-0.15 m/s^2 and 0.005-0.01 rad/s.
+seed: 9
+sim: {duration_s: 150}
+wind: {north_mps: 1.0, turbulence_severity: 1}
+sensors:
+  imu:
+    accel_bias_mps2: [0.10, -0.10, 0.15]
+    gyro_bias_rps: [0.010, -0.010, 0.005]
+mission:
+  - {type: takeoff, alt_m: 15.0}
+  - {type: hold, duration_s: 45.0}
+  - {type: land}
+requirements:
+  - id: REQ-IMU-001
+    text: While loitering, the vehicle stays within 3 m horizontally of the hold point.
+    stl: "always((loiter > 0) -> (hdist_cmd_m <= 3.0))"
+  - id: REQ-IMU-002
+    text: While loitering, altitude stays within 2 m of the commanded altitude.
+    stl: "always((loiter > 0) -> (abs(alt_err_m) <= 2.0))"
+  - id: REQ-LAND-015
+    text: The vehicle lands and disarms within 3 m of home.
+    stl: "eventually((landed > 0) and (hdist_m <= 3.0))"

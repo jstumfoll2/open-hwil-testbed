@@ -1,0 +1,29 @@
+# A faster transit: 80 m out and back at 7 m/s.
+name: out_and_back_fast
+description: Take off to 20 m, fly 80 m north-east at 7 m/s, pause 5 s, fly back and land.
+seed: 13
+sim: {duration_s: 180}
+wind: {north_mps: -2.0, turbulence_severity: 1}
+mission:
+  - {type: takeoff, alt_m: 20.0}
+  - {type: goto, north_m: 56.6, east_m: 56.6, speed_mps: 7.0}
+  - {type: hold, duration_s: 5.0}
+  - {type: goto, north_m: 0.0, east_m: 0.0, speed_mps: 7.0}
+  - {type: hold, duration_s: 5.0}
+  - {type: land}
+requirements:
+  - id: REQ-FAST-001
+    text: Tilt never exceeds 30 degrees.
+    stl: "always(tilt_deg <= 30.0)"
+  - id: REQ-FAST-002
+    text: Altitude stays within 3 m of 20 m during transit and pauses.
+    stl: "always(((goto > 0) or (loiter > 0)) -> (abs(alt_m - 20.0) <= 3.0))"
+  - id: REQ-FAST-003
+    text: The vehicle never goes more than 5 m past the far waypoint (85 m from home).
+    stl: "always(hdist_m <= 85.0)"
+  - id: REQ-FAST-004
+    text: At each pause, the vehicle is within 1.5 m horizontally of the commanded point.
+    stl: "always((loiter > 0) -> (hdist_cmd_m <= 1.5))"
+  - id: REQ-LAND-019
+    text: The vehicle lands and disarms within 2 m of home.
+    stl: "eventually((landed > 0) and (hdist_m <= 2.0))"

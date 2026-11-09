@@ -38,10 +38,12 @@ sensors:                     # 1-sigma white noise and constant biases
   mag:  {noise_gauss: 0.002, field_ned_gauss: [0.216, 0.016, 0.424]}
   gps:  {rate_hz: 10, noise_h_m: 0.3, noise_v_m: 0.5, noise_vel_mps: 0.05, satellites: 12}
 
-mission:                     # run in order
-  - {type: takeoff, alt_m: 20}     # climbs at 1.5 m/s (builtin) or PX4's takeoff speed
-  - {type: hold, duration_s: 60}   # position hold at home, at the takeoff altitude
-  - {type: land}                   # descend at home, disarm on the ground
+mission:                     # run in order; takeoff must come first
+  - {type: takeoff, alt_m: 20}     # climbs at home at 1.5 m/s (builtin) or PX4's takeoff speed
+  - {type: hold, duration_s: 60}   # position hold at the current commanded point
+  - {type: goto, north_m: 30, east_m: 0, alt_m: 20,   # metres from home; alt optional
+     speed_mps: 3, accept_radius_m: 1.0, timeout_s: 90}
+  - {type: land}                   # descend at the current commanded point, disarm on the ground
 
 faults:                      # active from t_s for duration_s (or until the end)
   - {type: motor_efficiency, motor: 0, factor: 0.85, t_s: 40}
@@ -71,11 +73,24 @@ Signals available to a spec: every column of `log.csv`
 | `alt_err_m` | `alt_m - alt_cmd_m` |
 | `hspeed_mps` | horizontal ground speed |
 | `hdist_m` | horizontal distance from home |
+| `hdist_cmd_m` | horizontal distance from the commanded point (goto target or hold point) |
+| `pos_err_m` | 3-D distance from the commanded point |
+| `goto` | true during a goto phase |
 | `tilt_deg` | tilt of the body z axis from vertical |
 
-`loiter` and `landed` are +10⁶ when true and -10⁶ when false. Write them as
-`loiter > 0`. The large magnitude keeps a guard like `(loiter > 0) -> phi`
-from capping the robustness, so the reported number is phi's real margin.
+`loiter`, `landed` and `goto` are +10⁶ when true and -10⁶ when false. Write
+them as `loiter > 0`. The large magnitude keeps a guard like `(loiter > 0) -> phi`
+from capping the robustness, so the reported number is phi's real margin. A
+spec made only of these booleans (for example
+`eventually(always[0s,100s](loiter > 0))`) reports 1000000 when it passes.
+
+A guarded requirement whose guard never held (the vehicle never loitered), or
+one whose time window starts after the run ended, is reported as **not
+exercised** and does not pass.
+
+A `goto` ends when the vehicle is within `accept_radius_m` of the target and
+slower than 0.5 m/s, or after `timeout_s` (recorded as a `goto_timeout` event).
+With PX4 it is sent as `MAV_CMD_DO_REPOSITION`.
 
 Useful patterns:
 
@@ -88,3 +103,14 @@ Useful patterns:
 
 Keep time bounds short or anchored as above: RTAMT's offline evaluation of a
 bounded `always[a,b]` gets slow when `b` is many times the run length.
+
+## Running many scenarios
+
+```bash
+hwil suite scenarios/*.yaml --jobs 4                               # builtin, in parallel
+hwil suite scenarios/*.yaml --controller px4 --px4-dir ~/src/PX4-Autopilot
+```
+
+The suite writes `suite.json` and `suite.html` (one row per scenario, every
+requirement with its margin, links to each run's report). With PX4 a fresh SITL
+instance is started for every scenario.

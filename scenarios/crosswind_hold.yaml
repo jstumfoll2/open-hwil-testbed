@@ -1,0 +1,23 @@
+# Position hold in a steady 5 m/s crosswind.
+name: crosswind_hold
+description: Take off to 20 m and hold 60 s in a steady 5 m/s wind from the west with light turbulence, then land.
+seed: 5
+sim: {duration_s: 150}
+wind: {east_mps: 5.0, turbulence_severity: 1}
+mission:
+  - {type: takeoff, alt_m: 20.0}
+  - {type: hold, duration_s: 60.0}
+  - {type: land}
+requirements:
+  - id: REQ-WIND-001
+    text: While loitering, the vehicle stays within 3 m horizontally of the hold point.
+    stl: "always((loiter > 0) -> (hdist_cmd_m <= 3.0))"
+  - id: REQ-WIND-002
+    text: While loitering, altitude stays within 2 m of the commanded altitude.
+    stl: "always((loiter > 0) -> (abs(alt_err_m) <= 2.0))"
+  - id: REQ-WIND-003
+    text: Tilt never exceeds 25 degrees.
+    stl: "always(tilt_deg <= 25.0)"
+  - id: REQ-LAND-011
+    text: The vehicle lands and disarms within 3 m of home.
+    stl: "eventually((landed > 0) and (hdist_m <= 3.0))"

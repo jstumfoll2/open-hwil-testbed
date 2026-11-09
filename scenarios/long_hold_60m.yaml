@@ -1,0 +1,23 @@
+# A higher, longer loiter: 60 m for two minutes.
+name: long_hold_60m
+description: Take off to 60 m, hold for 120 s in light wind, then land.
+seed: 12
+sim: {duration_s: 330}
+wind: {north_mps: 2.0, east_mps: -1.0, turbulence_severity: 1}
+mission:
+  - {type: takeoff, alt_m: 60.0}
+  - {type: hold, duration_s: 120.0}
+  - {type: land}
+requirements:
+  - id: REQ-HOLD-001
+    text: While loitering, altitude stays within 2 m of 60 m.
+    stl: "always((loiter > 0) -> (abs(alt_m - 60.0) <= 2.0))"
+  - id: REQ-HOLD-002
+    text: While loitering, the vehicle stays within 3 m horizontally of the hold point.
+    stl: "always((loiter > 0) -> (hdist_cmd_m <= 3.0))"
+  - id: REQ-HOLD-003
+    text: The vehicle is loitering for at least 100 continuous seconds at some point.
+    stl: "eventually(always[0s,100s](loiter > 0))"
+  - id: REQ-LAND-018
+    text: The vehicle lands and disarms within 3 m of home.
+    stl: "eventually((landed > 0) and (hdist_m <= 3.0))"

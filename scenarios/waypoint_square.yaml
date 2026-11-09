@@ -1,0 +1,39 @@
+# Fly a 30 m square at 15 m, pausing briefly at each corner, then land at home.
+name: waypoint_square
+description: >
+  Take off to 15 m, fly the corners of a 30 m square at 3 m/s with a 3 s pause
+  at each, return home and land. Light breeze from the west.
+seed: 3
+
+sim:
+  duration_s: 180
+
+wind:
+  east_mps: 2.0
+  turbulence_severity: 1
+
+mission:
+  - {type: takeoff, alt_m: 15.0}
+  - {type: goto, north_m: 30.0, east_m: 0.0}
+  - {type: hold, duration_s: 3.0}
+  - {type: goto, north_m: 30.0, east_m: 30.0}
+  - {type: hold, duration_s: 3.0}
+  - {type: goto, north_m: 0.0, east_m: 30.0}
+  - {type: hold, duration_s: 3.0}
+  - {type: goto, north_m: 0.0, east_m: 0.0}
+  - {type: hold, duration_s: 3.0}
+  - {type: land}
+
+requirements:
+  - id: REQ-WPT-001
+    text: At every corner pause, the vehicle is within 1.5 m horizontally of the commanded corner.
+    stl: "always((loiter > 0) -> (hdist_cmd_m <= 1.5))"
+  - id: REQ-WPT-002
+    text: Altitude stays within 2 m of 15 m on every leg and pause.
+    stl: "always(((goto > 0) or (loiter > 0)) -> (abs(alt_m - 15.0) <= 2.0))"
+  - id: REQ-WPT-003
+    text: Ground speed never exceeds 5 m/s.
+    stl: "always(hspeed_mps <= 5.0)"
+  - id: REQ-LAND-003
+    text: The vehicle lands and disarms within 2 m of home.
+    stl: "eventually((landed > 0) and (hdist_m <= 2.0))"

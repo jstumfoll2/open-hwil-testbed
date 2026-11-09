@@ -1,0 +1,29 @@
+# Home at 1650 m elevation, facing east, with the local magnetic field.
+name: high_elevation_home
+description: >
+  Same takeoff, hold and land, but from a home 1650 m above sea level (thinner
+  air, lower baro pressure, a different magnetic field) with the vehicle
+  initially facing east.
+seed: 11
+sim: {duration_s: 150}
+initial:
+  lat_deg: 39.7392
+  lon_deg: -104.9903
+  ground_alt_msl_m: 1650.0
+  heading_deg: 90.0
+sensors:
+  mag: {field_ned_gauss: [0.198, 0.028, 0.470]}   # approximate public WMM values
+mission:
+  - {type: takeoff, alt_m: 25.0}
+  - {type: hold, duration_s: 30.0}
+  - {type: land}
+requirements:
+  - id: REQ-ELEV-001
+    text: While loitering, altitude stays within 2 m of the commanded altitude.
+    stl: "always((loiter > 0) -> (abs(alt_err_m) <= 2.0))"
+  - id: REQ-ELEV-002
+    text: While loitering, the vehicle stays within 3 m horizontally of the hold point.
+    stl: "always((loiter > 0) -> (hdist_cmd_m <= 3.0))"
+  - id: REQ-LAND-017
+    text: The vehicle lands and disarms within 3 m of home.
+    stl: "eventually((landed > 0) and (hdist_m <= 3.0))"

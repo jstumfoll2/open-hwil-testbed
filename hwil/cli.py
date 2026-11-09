@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 
 from . import scenario as scn
@@ -45,6 +46,35 @@ def _cmd_reproduce(a) -> int:
     return 0
 
 
+def _cmd_suite(a) -> int:
+    from .suite import run_suite
+    opts = {"controller": a.controller, "plots": not a.no_plots}
+    suite_dir, summary = run_suite(a.scenarios, opts, a.out, jobs=a.jobs, px4_dir=a.px4_dir)
+    for r in summary["results"]:
+        if "error" in r:
+            print(f"ERROR {r['scenario']}: {r['error']}")
+            continue
+        n_ok = sum(q["passed"] for q in r["requirements"])
+        print(f"{'PASS' if r['passed'] else 'FAIL'} {r['scenario']:<22} {n_ok}/{len(r['requirements'])} requirements"
+              + (f"  ({r['aborted']})" if r.get("aborted") else ""))
+    print(f"{summary['passed']}/{summary['scenarios']} scenarios passed; report: {suite_dir / 'suite.html'}")
+    return 0 if summary["passed"] == summary["scenarios"] else 1
+
+
+def _cmd_montecarlo(a) -> int:
+    from .montecarlo import run_montecarlo
+    mc_dir, s = run_montecarlo(a.config, a.out, jobs=a.jobs, controller=a.controller,
+                               px4_dir=a.px4_dir, runs=a.runs)
+    lo, hi = s["pass_rate_ci95"]
+    print(f"{s['passed']}/{s['runs']} runs passed ({100 * s['pass_rate']:.1f} %, 95 % CI {100 * lo:.1f}-{100 * hi:.1f} %), "
+          f"{s['aborted']} aborted, {s['errors']} errors")
+    for rid, r in s["requirements"].items():
+        m = r["robustness_min"]
+        print(f"  {rid:<14} {r['passed']}/{r['runs']}  min margin {'n/a' if m is None else f'{m:.3f}'}")
+    print(f"report: {mc_dir / 'montecarlo.html'}")
+    return 0
+
+
 def _cmd_validate(a) -> int:
     for path in a.scenarios:
         scn.load(path)
@@ -76,6 +106,25 @@ def main(argv: list[str] | None = None) -> int:
     rp.add_argument("manifest")
     rp.add_argument("--out", default="runs")
     rp.set_defaults(func=_cmd_reproduce)
+
+    st = sub.add_parser("suite", help="run several scenarios and write a suite report")
+    st.add_argument("scenarios", nargs="+")
+    st.add_argument("--controller", choices=["builtin", "px4"], default="builtin")
+    st.add_argument("--jobs", type=int, default=1, help="parallel runs (builtin controller only)")
+    st.add_argument("--px4-dir", default=os.environ.get("HWIL_PX4_DIR"),
+                    help="PX4-Autopilot checkout; a fresh SITL instance is started per scenario")
+    st.add_argument("--out", default="runs")
+    st.add_argument("--no-plots", action="store_true")
+    st.set_defaults(func=_cmd_suite)
+
+    mc = sub.add_parser("montecarlo", help="run a Monte Carlo batch from montecarlo/*.yaml")
+    mc.add_argument("config")
+    mc.add_argument("--runs", type=int, help="override the number of runs")
+    mc.add_argument("--jobs", type=int, default=os.cpu_count() or 1)
+    mc.add_argument("--controller", choices=["builtin", "px4"], default="builtin")
+    mc.add_argument("--px4-dir", default=os.environ.get("HWIL_PX4_DIR"))
+    mc.add_argument("--out", default="runs")
+    mc.set_defaults(func=_cmd_montecarlo)
 
     v = sub.add_parser("validate", help="check scenario files")
     v.add_argument("scenarios", nargs="+")

@@ -1,0 +1,27 @@
+# Altitude changes at home: 10 m -> 30 m -> 15 m.
+name: altitude_steps
+description: Take off to 10 m, climb to 30 m, descend to 15 m, holding 10 s at each level, then land.
+seed: 4
+sim: {duration_s: 150}
+wind: {north_mps: 1.0, turbulence_severity: 1}
+mission:
+  - {type: takeoff, alt_m: 10.0}
+  - {type: hold, duration_s: 10.0}
+  - {type: goto, alt_m: 30.0, speed_mps: 2.0}
+  - {type: hold, duration_s: 10.0}
+  - {type: goto, alt_m: 15.0, speed_mps: 2.0}
+  - {type: hold, duration_s: 10.0}
+  - {type: land}
+requirements:
+  - id: REQ-ALT-010
+    text: During every hold, altitude is within 1.5 m of the commanded level.
+    stl: "always((loiter > 0) -> (abs(alt_err_m) <= 1.5))"
+  - id: REQ-ALT-011
+    text: Vertical speed never exceeds 3.5 m/s.
+    stl: "always(abs(vd_mps) <= 3.5)"
+  - id: REQ-ALT-012
+    text: The vehicle never climbs more than 3 m above the highest commanded level (30 m).
+    stl: "always(alt_m <= 33.0)"
+  - id: REQ-LAND-010
+    text: The vehicle lands and disarms within 2 m of home.
+    stl: "eventually((landed > 0) and (hdist_m <= 2.0))"

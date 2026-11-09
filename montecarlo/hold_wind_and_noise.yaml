@@ -1,0 +1,13 @@
+# Disperse wind, turbulence and sensor noise around the M1 reference scenario.
+name: hold_wind_and_noise
+scenario: ../scenarios/takeoff_hold_land.yaml
+runs: 200
+seed: 1000
+dispersions:
+  wind.north_mps:               {dist: uniform, low: -6.0, high: 6.0}
+  wind.east_mps:                {dist: uniform, low: -6.0, high: 6.0}
+  wind.turbulence_severity:     {dist: choice, values: [0, 1, 2, 3]}
+  sensors.imu.accel_noise_mps2: {dist: normal, mean: 0.02, std: 0.01, min: 0.0}
+  sensors.imu.gyro_noise_rps:   {dist: normal, mean: 0.002, std: 0.001, min: 0.0}
+  sensors.gps.noise_h_m:        {dist: uniform, low: 0.2, high: 1.5}
+  sensors.baro.noise_hpa:       {dist: uniform, low: 0.005, high: 0.04}
