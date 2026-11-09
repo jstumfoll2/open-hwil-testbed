@@ -38,3 +38,49 @@ jobs:
           name: sil-runs
           path: runs/
           retention-days: 14
+
+  cpp-executive:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      JSBSIM_PREFIX: ${{ github.workspace }}/.jsbsim
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Cache JSBSim C++ build
+        id: jsbsim-cache
+        uses: actions/cache@v4
+        with:
+          path: .jsbsim
+          key: jsbsim-1.3.3-${{ runner.os }}-ubuntu-24.04
+      - name: Build JSBSim 1.3.3 (C++ library)
+        if: steps.jsbsim-cache.outputs.cache-hit != 'true'
+        run: |
+          git clone -q --depth 1 --branch v1.3.3 https://github.com/JSBSim-Team/jsbsim.git /tmp/jsbsim
+          cmake -S /tmp/jsbsim -B /tmp/jsbsim/build -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_PYTHON_MODULE=OFF -DBUILD_DOCS=OFF -DCMAKE_INSTALL_PREFIX="$JSBSIM_PREFIX"
+          cmake --build /tmp/jsbsim/build -j4
+          cmake --install /tmp/jsbsim/build
+      - name: Build hwil_exec
+        run: |
+          cmake -S executive -B executive/build -DJSBSIM_ROOT="$JSBSIM_PREFIX"
+          cmake --build executive/build -j4
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Cross-check against the Python executive
+        run: pytest -q tests/test_cpp_executive.py
+      - name: Timing report (afap, both executives)
+        run: |
+          hwil run scenarios/takeoff_hold_land.yaml --executive cpp --no-plots --out runs
+          hwil run scenarios/takeoff_hold_land.yaml --executive python --no-plots --out runs
+          hwil timing runs/*/ --out runs/timing_report.html
+      - name: Upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cpp-runs
+          path: runs/
+          retention-days: 14

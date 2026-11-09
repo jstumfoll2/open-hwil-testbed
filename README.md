@@ -49,7 +49,11 @@ hwil run scenarios/takeoff_hold_land.yaml     # one scenario, about 4 s of wall 
 hwil suite scenarios/*.yaml --jobs 4          # all 13, with a suite report
 hwil montecarlo montecarlo/motor_loss_sweep.yaml --runs 40 --jobs 4   # dispersed batch
 pytest                                        # about 2 min; PX4 tests skip without PX4
+hwil timing runs/<run A> runs/<run B>         # side-by-side frame timing report
 ```
+
+To use the compiled executive (`hwil run --executive cpp`), build it first by
+following [executive/README.md](executive/README.md).
 
 `hwil run` prints a summary and writes a run folder under `runs/`:
 
@@ -163,10 +167,14 @@ the margin in the spec's units. Format details: [docs/scenarios.md](docs/scenari
 - Drag is one isotropic term; there is no rotor drag, ground effect or
   propeller inflow model yet.
 - HITL over serial is wired into the bridge but not yet tested on a Pixhawk.
-- Python frame timing on a stock (non-RT) kernel shows occasional overruns: a
-  107 s realtime run on a shared cloud VM had 35 overruns of 26,780 frames
-  (worst start lateness 10.7 ms at a 4 ms period). That is the baseline M4 and M7 have
-  to beat.
+- Frame timing on a stock (non-RT) kernel shows occasional overruns from VM
+  stalls. In a 4-minute realtime soak on a shared cloud VM, the C++ executive had
+  35 overruns of 62,727 frames and the Python executive had 87. The C++
+  executive's compute p99 was 113 us, against 787 us for Python. See
+  [docs/timing.md](docs/timing.md). Removing the overruns is the M7 goal on
+  PREEMPT_RT.
+- The C++ executive runs the builtin controller only and has no sensor models
+  yet (see [executive/README.md](executive/README.md)).
 
 ## Repo layout
 
@@ -174,11 +182,11 @@ the margin in the spec's units. Format details: [docs/scenarios.md](docs/scenari
 open-hwil-testbed/
   README.md          goals, ground rules, quick start
   LICENSE            Apache-2.0
-  docs/              brief, architecture, setup guide, scenario format
+  docs/              brief, architecture, setup, scenarios, Monte Carlo, timing
   hwil/              Python package: executive, JSBSim wrapper, sensors,
                      builtin controller, MAVLink bridge (hwil/bridge),
                      manifest, requirements grading, reports, CLI
-  executive/         reserved for the C++ / NASA Trick executive (M4, M6)
+  executive/         C++ fixed-rate executive hwil_exec (M4); Trick later (M6)
   models/            JSBSim model overlays (F450 drag), later sensor FMUs
   scenarios/         YAML scenario files
   montecarlo/        Monte Carlo batch definitions (dispersions over a scenario)
@@ -200,7 +208,7 @@ milestones (M7, M8) reuse all of it unchanged.
 | M1 | SIL loop: JSBSim + PX4 SITL, scripted takeoff/loiter/land | no | One command runs a scenario and produces plots | done |
 | M2 | Test harness | no | 10+ scenarios with STL-graded requirements, an HTML report per run and a suite report, for both builtin and PX4 SITL | done: 13 scenarios, 50 requirements, all pass with both |
 | M3 | Monte Carlo in SIL | no | Batch runs over wind, sensor-noise and fault dispersions, in parallel, with pass-rate and margin statistics | done: see [docs/montecarlo.md](docs/montecarlo.md) |
-| M4 | Compiled executive and timing tooling | no | C++ fixed-rate loop with JSBSim, same scenarios and logs as Python; jitter and overrun report on a stock kernel; bridge latency measured in SITL | |
+| M4 | Compiled executive and timing tooling | no | C++ fixed-rate loop with JSBSim, same scenarios and logs as Python; jitter and overrun report on a stock kernel; bridge latency measured in SITL | done: see [docs/timing.md](docs/timing.md) |
 | M5 | AI-in-test add-on | no | Anomaly detection over run logs, plus LLM-drafted test cases reviewed by a human | |
 | M6 | NASA Trick executive (optional) | no | Trick runs the loop with Monte Carlo of wind and sensor-noise cases in SIL | |
 | M7 | Real-time baseline on PREEMPT_RT | Linux PC | cyclictest and in-loop jitter report; no overruns in a 30-minute run | overrun counter and timing log in place |

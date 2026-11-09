@@ -15,7 +15,7 @@ def _cmd_run(a) -> int:
     sc = scn.load(a.scenario)
     if a.seed is not None:
         sc["seed"] = a.seed
-    opts = {"controller": a.controller, "clock": a.clock, "plots": not a.no_plots,
+    opts = {"controller": a.controller, "clock": a.clock, "plots": not a.no_plots, "executive": a.executive,
             "px4_sim_port": a.px4_sim_port, "px4_gcs": a.px4_gcs,
             "px4_serial": a.px4_serial, "px4_baud": a.px4_baud,
             "rt_priority": a.rt_priority, "rt_cpu": a.rt_cpu}
@@ -75,6 +75,22 @@ def _cmd_montecarlo(a) -> int:
     return 0
 
 
+def _cmd_timing(a) -> int:
+    from pathlib import Path
+
+    from .timing import build, write_html
+    rep = build(a.runs)
+    for r in rep["runs"]:
+        late = r["late_us"].get("max")
+        print(f"{r['label']}: {r['frames']} frames, {r['overruns']} overruns, "
+              f"compute p99 {r['compute_us']['p99']:.0f} us"
+              + (f", start lateness max {late:.0f} us" if late is not None else "")
+              + (f", PX4 round trip p99 {r['px4_round_trip_us']['p99']:.0f} us" if r["px4_round_trip_us"] else ""))
+    out = write_html(rep, Path(a.out))
+    print(f"report: {out}")
+    return 0
+
+
 def _cmd_validate(a) -> int:
     for path in a.scenarios:
         scn.load(path)
@@ -91,6 +107,8 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--controller", choices=["builtin", "px4"], default="builtin")
     r.add_argument("--clock", choices=["afap", "realtime"], default="afap",
                    help="afap = as fast as possible (lockstep with PX4); realtime = wall-clock frames")
+    r.add_argument("--executive", choices=["python", "cpp"], default="python",
+                   help="cpp = compiled loop in executive/ (builtin controller only)")
     r.add_argument("--seed", type=int, help="override the scenario seed")
     r.add_argument("--out", default="runs")
     r.add_argument("--no-plots", action="store_true")
@@ -125,6 +143,11 @@ def main(argv: list[str] | None = None) -> int:
     mc.add_argument("--px4-dir", default=os.environ.get("HWIL_PX4_DIR"))
     mc.add_argument("--out", default="runs")
     mc.set_defaults(func=_cmd_montecarlo)
+
+    tm = sub.add_parser("timing", help="compare frame timing across run folders")
+    tm.add_argument("runs", nargs="+")
+    tm.add_argument("--out", default="timing_report.html")
+    tm.set_defaults(func=_cmd_timing)
 
     v = sub.add_parser("validate", help="check scenario files")
     v.add_argument("scenarios", nargs="+")

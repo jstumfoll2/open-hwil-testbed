@@ -9,3 +9,5 @@ dist/
 runs/
 pytest-tmp/
 *.ulg
+executive/build/
+timing_report.*
