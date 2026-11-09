@@ -50,6 +50,8 @@ hwil suite scenarios/*.yaml --jobs 4          # all 13, with a suite report
 hwil montecarlo montecarlo/motor_loss_sweep.yaml --runs 40 --jobs 4   # dispersed batch
 pytest                                        # about 2 min; PX4 tests skip without PX4
 hwil timing runs/<run A> runs/<run B>         # side-by-side frame timing report
+hwil anomaly score runs/<run>                 # flag odd stretches against nominal flights
+hwil draft "your test idea"                   # Claude drafts a scenario for review (needs .[ai] and a key)
 ```
 
 To use the compiled executive (`hwil run --executive cpp`), build it first by
@@ -182,16 +184,17 @@ the margin in the spec's units. Format details: [docs/scenarios.md](docs/scenari
 open-hwil-testbed/
   README.md          goals, ground rules, quick start
   LICENSE            Apache-2.0
-  docs/              brief, architecture, setup, scenarios, Monte Carlo, timing
+  docs/              brief, architecture, setup, scenarios, Monte Carlo, timing,
+                     anomaly detection, AI in test
   hwil/              Python package: executive, JSBSim wrapper, sensors,
                      builtin controller, MAVLink bridge (hwil/bridge),
                      manifest, requirements grading, reports, CLI
   executive/         C++ fixed-rate executive hwil_exec (M4); Trick later (M6)
-  models/            JSBSim model overlays (F450 drag), later sensor FMUs
-  scenarios/         YAML scenario files
+  models/            JSBSim model overlays (F450 drag), anomaly baselines
+  scenarios/         YAML scenario files (drafts/ holds unreviewed LLM drafts)
   montecarlo/        Monte Carlo batch definitions (dispersions over a scenario)
   tests/             pytest suite, including RTAMT-graded scenario tests
-  tools/             helper scripts (log tools, anomaly detection in M5)
+  tools/             helper scripts (anomaly baseline refit)
   ci/                scripts used by CI and the bench (PX4 SITL launcher)
   .github/workflows/ GitHub Actions (SIL tests on every push)
 ```
@@ -209,7 +212,7 @@ milestones (M7, M8) reuse all of it unchanged.
 | M2 | Test harness | no | 10+ scenarios with STL-graded requirements, an HTML report per run and a suite report, for both builtin and PX4 SITL | done: 13 scenarios, 50 requirements, all pass with both |
 | M3 | Monte Carlo in SIL | no | Batch runs over wind, sensor-noise and fault dispersions, in parallel, with pass-rate and margin statistics | done: see [docs/montecarlo.md](docs/montecarlo.md) |
 | M4 | Compiled executive and timing tooling | no | C++ fixed-rate loop with JSBSim, same scenarios and logs as Python; jitter and overrun report on a stock kernel; bridge latency measured in SITL | done: see [docs/timing.md](docs/timing.md) |
-| M5 | AI-in-test add-on | no | Anomaly detection over run logs, plus LLM-drafted test cases reviewed by a human | |
+| M5 | AI-in-test add-on | no | Anomaly detection over run logs, plus LLM-drafted test cases reviewed by a human | done: see [docs/ai-in-test.md](docs/ai-in-test.md) |
 | M6 | NASA Trick executive (optional) | no | Trick runs the loop with Monte Carlo of wind and sensor-noise cases in SIL | |
 | M7 | Real-time baseline on PREEMPT_RT | Linux PC | cyclictest and in-loop jitter report; no overruns in a 30-minute run | overrun counter and timing log in place |
 | M8 | HITL with a real Pixhawk | Pixhawk | Same scenarios pass in SIL and HITL within stated tolerances; end-to-end latency measured | serial-link option in the bridge, untested |

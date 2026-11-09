@@ -1,0 +1,234 @@
+{
+ "version": 1,
+ "controllers": [
+  "builtin"
+ ],
+ "runs": [
+  "run0000",
+  "run0001",
+  "run0002",
+  "run0003",
+  "run0004",
+  "run0005",
+  "run0006",
+  "run0007",
+  "run0008",
+  "run0009",
+  "run0010",
+  "run0011",
+  "run0012",
+  "run0013",
+  "run0014",
+  "run0015",
+  "run0016",
+  "run0017",
+  "run0018",
+  "run0019",
+  "run0020",
+  "run0021",
+  "run0022",
+  "run0023",
+  "run0024",
+  "run0025",
+  "run0026",
+  "run0027",
+  "run0028",
+  "run0029",
+  "run0030",
+  "run0031",
+  "run0032",
+  "run0033",
+  "run0034",
+  "run0035",
+  "run0036",
+  "run0037",
+  "run0038",
+  "run0039",
+  "run0040",
+  "run0041",
+  "run0042",
+  "run0043",
+  "run0044",
+  "run0045",
+  "run0046",
+  "run0047",
+  "run0048",
+  "run0049",
+  "run0050",
+  "run0051",
+  "run0052",
+  "run0053",
+  "run0054",
+  "run0055",
+  "run0056",
+  "run0057",
+  "run0058",
+  "run0059",
+  "20261109T161707Z_altitude_steps_57b74369",
+  "20261109T161707Z_crosswind_hold_7980863f",
+  "20261109T161707Z_takeoff_hold_land_1888be8f",
+  "20261109T161707Z_waypoint_square_35725cee",
+  "20261109T161712Z_high_elevation_home_22535b4c",
+  "20261109T161712Z_long_hold_60m_e9b28cd1",
+  "20261109T161712Z_noisy_sensors_fdd20056",
+  "20261109T161713Z_out_and_back_fast_08d785b7"
+ ],
+ "n_runs": 68,
+ "block_s": 0.1,
+ "thrust_curve": [
+  -0.0043173789273550055,
+  0.08780940445131286,
+  -0.026815655991909555
+ ],
+ "features": {
+  "torque_roll": {
+   "description": "roll torque demand from the motor mix (2 s mean)",
+   "unit": "cmd"
+  },
+  "torque_pitch": {
+   "description": "pitch torque demand from the motor mix (2 s mean)",
+   "unit": "cmd"
+  },
+  "torque_yaw": {
+   "description": "yaw torque demand from the motor mix (2 s mean)",
+   "unit": "cmd"
+  },
+  "thrust_resid": {
+   "description": "collective command beyond what the measured lift needs (2 s mean)",
+   "unit": "cmd"
+  },
+  "baro_resid": {
+   "description": "baro altitude minus true altitude, start-up offset removed (2 s mean)",
+   "unit": "m"
+  },
+  "gps_invalid": {
+   "description": "share of the last second without a valid GPS fix",
+   "unit": ""
+  },
+  "rate_noise": {
+   "description": "body-rate noise, std of p, q, r over 1 s",
+   "unit": "rad/s"
+  }
+ },
+ "stats": {
+  "torque_roll": {
+   "ground": {
+    "median": 0.0,
+    "spread": 0.002,
+    "n": 2042
+   },
+   "climb_descent": {
+    "median": -4.999965719232336e-13,
+    "spread": 0.002,
+    "n": 30605
+   },
+   "cruise": {
+    "median": 9.999959194040287e-13,
+    "spread": 0.002,
+    "n": 40978
+   }
+  },
+  "torque_pitch": {
+   "ground": {
+    "median": 0.0,
+    "spread": 0.002,
+    "n": 2042
+   },
+   "climb_descent": {
+    "median": 0.0,
+    "spread": 0.002,
+    "n": 30605
+   },
+   "cruise": {
+    "median": 4.999927988996733e-13,
+    "spread": 0.002,
+    "n": 40978
+   }
+  },
+  "torque_yaw": {
+   "ground": {
+    "median": 0.0,
+    "spread": 0.002,
+    "n": 2042
+   },
+   "climb_descent": {
+    "median": 0.0,
+    "spread": 0.002,
+    "n": 30605
+   },
+   "cruise": {
+    "median": 4.999510330602969e-13,
+    "spread": 0.002,
+    "n": 40978
+   }
+  },
+  "thrust_resid": {
+   "ground": {
+    "median": 0.0,
+    "spread": 0.005,
+    "n": 2042
+   },
+   "climb_descent": {
+    "median": -0.0032513713866858863,
+    "spread": 0.010111919272632039,
+    "n": 30605
+   },
+   "cruise": {
+    "median": -0.0018584233496699827,
+    "spread": 0.009323296088389887,
+    "n": 40978
+   }
+  },
+  "baro_resid": {
+   "ground": {
+    "median": 0.0005962455423286883,
+    "spread": 0.15,
+    "n": 2042
+   },
+   "climb_descent": {
+    "median": 0.0010271216380175474,
+    "spread": 0.15,
+    "n": 30605
+   },
+   "cruise": {
+    "median": 0.0008291887364421768,
+    "spread": 0.15,
+    "n": 40978
+   }
+  },
+  "gps_invalid": {
+   "ground": {
+    "median": 0.0,
+    "spread": 0.05,
+    "n": 2042
+   },
+   "climb_descent": {
+    "median": 0.0,
+    "spread": 0.05,
+    "n": 30605
+   },
+   "cruise": {
+    "median": 0.0,
+    "spread": 0.05,
+    "n": 40978
+   }
+  },
+  "rate_noise": {
+   "ground": {
+    "median": 0.008226871272946527,
+    "spread": 0.02442182103285715,
+    "n": 2042
+   },
+   "climb_descent": {
+    "median": 0.0009243577003272344,
+    "spread": 0.04669332263448772,
+    "n": 30605
+   },
+   "cruise": {
+    "median": 0.001140000899802462,
+    "spread": 0.01,
+    "n": 40978
+   }
+  }
+ }
+}

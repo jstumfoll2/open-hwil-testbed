@@ -148,6 +148,8 @@ int main(int argc, char** argv) {
         break;
       }
       std::array<double, 4> m = ctrl.update(s, dt);
+      // Log the controller's command, as an autopilot log would (see executive.py).
+      const std::array<double, 4> m_cmd = m;
       double gps_valid = 1.0;
       for (const Item& f : cfg.faults) {
         if (!fault_active(f, s.t)) continue;
@@ -159,7 +161,7 @@ int main(int argc, char** argv) {
 
       const Phase ph = mission.phase();
       const bool has_alt_cmd = ph == TAKEOFF || ph == GOTO || ph == HOLD || ph == HOLD_END;
-      const auto& mc = fdm.motors();
+      const auto& mc = m_cmd;
       double* row = &log[n * LOG_COLS];
       const double vals[LOG_COLS] = {
           s.t, double(phase_id(ph)), double(mission.index()),

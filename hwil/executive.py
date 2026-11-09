@@ -159,6 +159,9 @@ class Executive:
             io_before = getattr(self.ctrl, "io_wait_ns", 0)
             motors = self.ctrl.update(s, frame, self.dt)
             io_wait_us = (getattr(self.ctrl, "io_wait_ns", 0) - io_before) / 1e3
+            # Log the controller's command, as an autopilot log would. A motor
+            # fault changes what the motor delivers, not what was commanded.
+            motors_cmd = np.clip(np.asarray(motors, dtype=float), 0.0, 1.0)
             motors = self.faults.apply(s.t, motors, self.sensors)
             self.fdm.set_motors(motors)
             self.fdm.step()
@@ -173,7 +176,7 @@ class Executive:
                 s.t, PHASE_IDS.get(sp_phase, PHASE_IDS["hold"]), mi.idx,
                 *s.pos_ned, s.alt_m, alt_cmd, s.alt_agl_m,
                 *s.vel_ned, *s.euler, *s.rates_body, *s.accel_body,
-                *self.fdm.motor_cmd, *s.wind_ned, s.lat_deg, s.lon_deg,
+                *motors_cmd, *s.wind_ned, s.lat_deg, s.lon_deg,
                 last_baro_alt, gps_valid,
                 mi.ne_target[0], mi.ne_target[1],
             ]

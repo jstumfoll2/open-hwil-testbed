@@ -10,4 +10,10 @@ package so they are importable from tests:
 - `hwil suite` and `hwil montecarlo` for many runs at once (`hwil/suite.py`,
   `hwil/montecarlo.py`)
 
-Planned here: log anomaly detection (M5).
+- `hwil anomaly fit` / `hwil anomaly score` for log anomaly detection
+  (`hwil/anomaly.py`, see [docs/anomaly.md](../docs/anomaly.md))
+
+Scripts here:
+
+- `fit_anomaly_baseline.sh` regenerates `models/anomaly/baseline_builtin.json`
+  from nominal runs.

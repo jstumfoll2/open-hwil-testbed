@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+from pathlib import Path
 import sys
 
 from . import scenario as scn
@@ -91,6 +92,67 @@ def _cmd_timing(a) -> int:
     return 0
 
 
+def _cmd_anomaly_fit(a) -> int:
+    from . import anomaly
+
+    base = anomaly.fit(a.runs)
+    out = Path(a.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(base, indent=1), encoding="utf-8")
+    print(f"baseline    : {out} from {base['n_runs']} run(s), controller {', '.join(base['controllers'])}")
+    return 0
+
+
+def _cmd_anomaly_score(a) -> int:
+    from . import anomaly
+
+    runs = anomaly.find_runs(a.runs)
+    if not runs:
+        print("no run folders with log.csv found")
+        return 2
+    flagged = 0
+    for r in runs:
+        ctrl = anomaly._controller(r)
+        path = Path(a.baseline) if a.baseline else anomaly.default_baseline(ctrl)
+        if not path.exists():
+            print(f"{r}: no baseline for controller {ctrl!r}; fit one with `hwil anomaly fit`")
+            return 2
+        base = json.loads(path.read_text())
+        res = anomaly.score(r, base, a.z, a.min_s)
+        page = anomaly.write_outputs(res, base, plots=not a.no_plots)
+        flagged += res["anomalous"]
+        verdict = "ANOMALOUS" if res["anomalous"] else "nominal"
+        print(f"{verdict:9s} {r}  ({page.name})")
+        for s in res["segments"]:
+            sig = ", ".join(f"{g['feature']} z={g['peak_z']:g}" for g in s["signals"][:3])
+            print(f"          {s['t_start']:7.1f} to {s['t_end']:7.1f} s  {sig}")
+    print(f"{flagged} of {len(runs)} run(s) flagged")
+    return 1 if flagged and a.fail_on_anomaly else 0
+
+
+def _cmd_draft(a) -> int:
+    from . import drafting
+
+    try:
+        d = drafting.draft(a.idea, model=a.model)
+    except drafting.DraftError as e:
+        print(f"draft: {e}")
+        return 2
+    if a.run and not d.problems:
+        d.dry_run = drafting.dry_run(d, Path(a.runs_out))
+    yml, md = drafting.write(d, Path(a.out))
+    print(f"draft       : {yml}")
+    print(f"review notes: {md}")
+    for p in d.problems:
+        print(f"PROBLEM     : {p}")
+    if d.dry_run and "requirements" in d.dry_run:
+        for r in d.dry_run["requirements"]:
+            v = "NOT EXERCISED" if r["vacuous"] else ("PASS" if r["passed"] else "FAIL")
+            print(f"{v:13s} {r['id']}  robustness {r['robustness']:.3g}")
+    print("This is a draft. Review it before moving it into scenarios/.")
+    return 1 if d.problems else 0
+
+
 def _cmd_validate(a) -> int:
     for path in a.scenarios:
         scn.load(path)
@@ -148,6 +210,29 @@ def main(argv: list[str] | None = None) -> int:
     tm.add_argument("runs", nargs="+")
     tm.add_argument("--out", default="timing_report.html")
     tm.set_defaults(func=_cmd_timing)
+
+    an = sub.add_parser("anomaly", help="learn nominal behaviour from runs and flag anomalies in others")
+    an_sub = an.add_subparsers(dest="anomaly_cmd", required=True)
+    af = an_sub.add_parser("fit", help="fit a baseline from nominal run folders or batch folders")
+    af.add_argument("runs", nargs="+")
+    af.add_argument("--out", default="anomaly_baseline.json")
+    af.set_defaults(func=_cmd_anomaly_fit)
+    asc = an_sub.add_parser("score", help="score run folders against a baseline")
+    asc.add_argument("runs", nargs="+")
+    asc.add_argument("--baseline", help="baseline JSON (default: the shipped one for the run's controller)")
+    asc.add_argument("--z", type=float, default=7.0, help="|z| threshold")
+    asc.add_argument("--min-s", type=float, default=1.0, help="minimum anomaly duration in seconds")
+    asc.add_argument("--no-plots", action="store_true")
+    asc.add_argument("--fail-on-anomaly", action="store_true", help="exit 1 if any run is flagged")
+    asc.set_defaults(func=_cmd_anomaly_score)
+
+    dr = sub.add_parser("draft", help="have Claude draft a scenario from a test idea, for human review")
+    dr.add_argument("idea", help="the test idea in plain language")
+    dr.add_argument("--out", default="scenarios/drafts")
+    dr.add_argument("--model", default="claude-opus-5-5")
+    dr.add_argument("--no-run", dest="run", action="store_false", help="skip the builtin dry run")
+    dr.add_argument("--runs-out", default="runs", help="where the dry run's run folder goes")
+    dr.set_defaults(func=_cmd_draft)
 
     v = sub.add_parser("validate", help="check scenario files")
     v.add_argument("scenarios", nargs="+")

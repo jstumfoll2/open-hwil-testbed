@@ -23,6 +23,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=7"]
+ai = ["anthropic>=1"]
 
 [project.scripts]
 hwil = "hwil.cli:main"

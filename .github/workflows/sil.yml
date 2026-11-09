@@ -18,7 +18,7 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: Install
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev,ai]"
       - name: Validate scenarios
         run: hwil validate scenarios/*.yaml
       - name: Tests (builtin controller; PX4 tests skip here)
@@ -29,6 +29,10 @@ jobs:
           hwil reproduce runs/*/manifest.json --out runs
       - name: Suite report over every scenario
         run: hwil suite scenarios/*.yaml --jobs 4 --no-plots --out runs
+      - name: Anomaly scores (reference run must be clean; suite runs are scored for the report)
+        run: |
+          hwil anomaly score runs/*takeoff_hold_land*/ --fail-on-anomaly --no-plots
+          hwil anomaly score runs/suite_*/ --no-plots
       - name: Small Monte Carlo batch
         run: hwil montecarlo montecarlo/motor_loss_sweep.yaml --runs 24 --jobs 4 --out runs
       - name: Upload run folders
@@ -69,7 +73,7 @@ jobs:
           cmake -S executive -B executive/build -DJSBSIM_ROOT="$JSBSIM_PREFIX"
           cmake --build executive/build -j4
       - name: Install
-        run: pip install -e ".[dev]"
+        run: pip install -e ".[dev,ai]"
       - name: Cross-check against the Python executive
         run: pytest -q tests/test_cpp_executive.py
       - name: Timing report (afap, both executives)
