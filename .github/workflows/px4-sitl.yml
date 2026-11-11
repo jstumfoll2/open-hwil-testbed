@@ -40,6 +40,8 @@ jobs:
           # Shallow NuttX submodule has no tags; PX4's version script needs one.
           git -C px4/platforms/nuttx/NuttX/nuttx tag nuttx-11.0.0
           python -m venv px4-venv
+          # v1.15.4 lists "matplotlib>=3.0.*", which pip 24.1 and later reject.
+          sed -i 's/matplotlib>=3\.0\.\*/matplotlib>=3.0/' px4/Tools/setup/requirements.txt
           px4-venv/bin/pip install -r px4/Tools/setup/requirements.txt
           PATH="$PWD/px4-venv/bin:$PATH" make -C px4 px4_sitl_default
       - name: Tests with PX4 in the loop
